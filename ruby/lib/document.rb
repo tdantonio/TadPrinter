@@ -1,8 +1,7 @@
-# frozen_string_literal: true
-require 'A:\Universidad\Tercer año\TADP\grupo3-2023-2c\ruby\lib\tag.rb'
+require './ruby/lib/tag.rb'
 
 class Document
-  attr_reader :proc, :tag
+  attr_accessor :proc, :tag
 
   def initialize(&proc)
     @proc = proc
@@ -52,19 +51,7 @@ end
 
 puts documento.xml
 
-###############################
-# Ruby:
-# documento = Document.new do
-# 	alumno nombre: "Matias", legajo: "123456-7" do
-# 		telefono { "1234567890" }
-#     estado es_regular: true {
-#       finales_rendidos { 3 }
-#       materias_aprobadas { 5 }
-#     }
-# 	end
-# end
-#
-#
+# Output:
 # XML:
 # <alumno nombre="Matias" legajo= "123456-7">
 #   <telefono>1234567890</telefono>
@@ -74,26 +61,25 @@ puts documento.xml
 #   </estado>
 # </alumno>
 
-=begin
-Tag
-  .with_label('alumno')
-  .with_attribute('nombre', 'Mati')
-  .with_attribute('legajo', '123456-7')
-  .with_attribute('edad', 27)
-  .with_child(
-    Tag
-      .with_label('telefono')
-      .with_child('12345678')
-  )
-  .with_child(
-    Tag
-      .with_label('estado')
-      .with_child(
-        Tag
-          .with_label('value')
-          .with_child('regular')
-      )
-  )
-  .with_child(Tag.with_label('no_children'))
-  .xml
-=end
+# Orden de ejecucion:
+# documento = Document.new
+# documento.tag =
+# Tag.with_label('alumno').
+#   with_attribute('nombre', 'Matias').
+#   with_attribute('legajo', '123456-7').
+#   with_child(
+#     Tag.
+#       with_label('telefono').
+#       with_child('1234567890')).
+#       with_child(
+#           Tag.
+#             with_label('estado').
+#             with_attribute('es_regular', true).
+#             with_child(
+#               Tag.
+#                 with_label('finales_rendidos').
+#                 with_child('3')).
+#                 with_child(
+#                   Tag.
+#                     with_label('materias_aprobadas').with_child('5')))
+# puts documento.xml
