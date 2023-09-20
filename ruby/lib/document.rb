@@ -10,28 +10,44 @@ class Document
 
   def xml
     instance_eval(&proc)
-    tag.xml
+    @tag.xml
   end
 
-  private def method_missing(name, *args, &bloque)
-    @tag = Tag.with_label(name)
-    puts "name: #{name}"
-
-    parametros = args.first
-    parametros.each do |clave, valor|
-      # puts "clave: #{clave}; valor: #{valor}"
-      @tag.with_attribute(clave, valor)
+  private def method_missing(name, *args, &proc)
+    if @tag == nil
+      @tag = taggear_parametros(name, *args)
+    else
+      @tag.with_child(taggear_parametros(name, args))
     end
 
-    @tag.with_child(Tag.with_label(bloque))
+    if block_given?
+      instance_eval(&proc)
+    end
+
+  end
+
+  def taggear_parametros(name, *args)
+    tag = Tag.with_label(name)
+
+    unless args.empty?
+      parametros = args.first
+      parametros.each do |clave, valor|
+        tag.with_attribute(clave, valor)
+      end
+    end
+
+    tag
   end
 end
 
 documento = Document.new do
   alumno nombre: "Matias", legajo: "123456-7" do
-    telefono { "1234567890" }
-  end
-
+     		telefono { "1234567890" }
+         estado es_regular: true do
+           finales_rendidos { 3 }
+           materias_aprobadas { 5 }
+         end
+     	end
 end
 
 puts documento.xml
