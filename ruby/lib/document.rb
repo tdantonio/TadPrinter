@@ -1,32 +1,46 @@
 require './ruby/lib/tag.rb'
 
 class Document
-  attr_accessor :proc, :tag
+  attr_accessor :proc, :root_tag, :cola_tags
 
   def initialize(&proc)
     @proc = proc
+    @cola_tags = []
   end
 
   def xml
     instance_eval(&proc)
-    @tag.xml
+    @root_tag.xml
   end
 
   private def method_missing(name, *args, &proc)
-    if @tag == nil
-      @tag = taggear_parametros(name, *args)
-    else
-      @tag.with_child(taggear_parametros(name, args))
+
+    tag = Tag.new(name)
+    tag.with_label(name)
+
+    tag = add_atributos(tag, *args)
+
+    if @root_tag == nil
+      @root_tag = tag
     end
+
+    cola_tags.push(tag)
 
     if block_given?
       instance_eval(&proc)
     end
 
+    cola_tags.pop(1)
+
+    unless cola_tags.empty?
+
+      cola_tags[-1].with_child(tag)
+
+    end
+
   end
 
-  def taggear_parametros(name, *args)
-    tag = Tag.with_label(name)
+  def add_atributos(tag, *args)
 
     unless args.empty?
       parametros = args.first
@@ -34,7 +48,6 @@ class Document
         tag.with_attribute(clave, valor)
       end
     end
-
     tag
   end
 end
@@ -48,6 +61,7 @@ documento = Document.new do
          end
      	end
 end
+
 
 puts documento.xml
 
