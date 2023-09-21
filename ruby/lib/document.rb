@@ -1,7 +1,7 @@
 require './ruby/lib/tag.rb'
 
 class Document
-  attr_accessor :proc, :root_tag, :cola_tags
+  attr_accessor :proc, :cola_tags
 
   def initialize(&proc)
     @proc = proc
@@ -9,35 +9,27 @@ class Document
   end
 
   def xml
-    instance_eval(&proc)
-    @root_tag.xml
+    tag_final = instance_eval(&proc)
+    tag_final.xml
   end
 
   private def method_missing(name, *args, &proc)
+    tag = Tag.with_label(name)
 
-    tag = Tag.new(name)
-    tag.with_label(name)
-
-    tag = add_atributos(tag, *args)
-
-    if @root_tag == nil
-      @root_tag = tag
-    end
+    add_atributos(tag, *args)
 
     cola_tags.push(tag)
-
-    if block_given?
-      instance_eval(&proc)
+    contenido = instance_eval(&proc)
+    unless contenido.is_a? Tag
+      tag.with_child(contenido)
     end
-
-    cola_tags.pop(1)
+    cola_tags.pop
 
     unless cola_tags.empty?
-
       cola_tags[-1].with_child(tag)
-
     end
 
+    tag
   end
 
   def add_atributos(tag, *args)
@@ -48,7 +40,6 @@ class Document
         tag.with_attribute(clave, valor)
       end
     end
-    tag
   end
 end
 
