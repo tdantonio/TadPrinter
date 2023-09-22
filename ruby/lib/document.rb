@@ -1,10 +1,10 @@
-require './ruby/lib/tag.rb'
+require_relative 'tag.rb'
 
 class Document
 
   def initialize(&proc)
     @stack_tags = []
-    @tag_final = instance_eval(&proc)
+    instance_eval(&proc)
     # @tag_final = instance_exec &proc # Funciona igual
   end
 
@@ -14,13 +14,15 @@ class Document
 
   private def method_missing(name, *args, &proc)
     tag = Tag.with_label(name)
-
+    if @tag_final.nil?
+      @tag_final = tag
+    end
     tag.with_attributes(args.empty? ? [] : args.first)
 
     @stack_tags.push(tag)
     contenido = instance_eval(&proc)
-    # contenido = instance_exec &proc # Funciona igual
-    unless contenido.is_a? Tag
+
+    unless contenido.is_a? Tag or contenido.is_a? Array
       tag.with_child(contenido)
     end
     @stack_tags.pop
@@ -33,45 +35,17 @@ class Document
   end
 
   def self.serialize(object)
-=begin
-    @tag_final = Tag.with_label(objeto.class.to_s.downcase)
-
-    # Se obtienen los atributos del objeto y se meten en un hash
-    getters = objeto.instance_variables.map{ |a| a.to_s.delete_prefix('@')}.select{|m| objeto.respond_to?m}
-    atributos = Hash.new
-    getters.each { |m| atributos[m] = objeto.send(m) }
-
-    # A partir del Hash se agregar los atributos al tag
-    with_attributes(@tag_final, atributos)
-=end
-
-=begin
-    Document.new do
-      send(object.class.to_s.downcase, object.normal_attributes_as_hash) &Document.proc_automatico(object.children)
-    end
-=end
-    Document.new &Document.proc_automatico([object])
+    Document.new(&Document.proc_automatico([object]))
   end
 
   def self.proc_automatico(objects)
     proc do
-      # No funciona porque "each" devuelve la lista de objetos, y solo queremos que devuelva lo que devuelve send
-      # objects.each{ |unObjeto| send(unObjeto.class.to_s.downcase, unObjeto.normal_attributes_as_hash) {  } }
+        objects.each { |object|
 
-      # Ídem "each", pero ahora lo hace el "for"
-=begin
-      for unObjeto in objects
-        send(unObjeto.class.to_s.downcase, unObjeto.normal_attributes_as_hash) &Document.proc_automatico(unObjeto.children)
-      end
-=end
-
-      # Rompe cuando quiere evaluar &Document.proc_automatico(unObjeto.children)
-      puts "objects[0]: #{objects[0]}"
-      unObjeto = objects[0]
-      send(unObjeto.class.to_s.downcase, unObjeto.normal_attributes_as_hash) &Document.proc_automatico(unObjeto.children)
+          send(object.class.to_s.downcase, object.normal_attributes_as_hash, &Document.proc_automatico(object.children))
+        }
     end
   end
-
 end
 
 
@@ -106,30 +80,33 @@ end
 
 
 class Alumno
-  attr_reader :nombre, :legajo
-
-  def initialize(nombre, legajo, telefono)
+  attr_reader :nombre, :legajo, :estado
+  def initialize(nombre, legajo, telefono, estado)
     @nombre = nombre
     @legajo = legajo
     @telefono = telefono
+    @estado = estado
   end
 end
 
+class Estado
+  attr_reader :finales_rendidos, :materias_aprobadas, :es_regular
+  def initialize(finales_rendidos, materias_aprobadas, es_regular)
+    @finales_rendidos = finales_rendidos
+    @es_regular = es_regular
+    @materias_aprobadas = materias_aprobadas
+  end
+end
 
-unAlumno = Alumno.new("Matias","123456-8", "1234567890")
+unEstado = Estado.new(3, 5, true)
+unAlumno = Alumno.new("Matias","123456-8", "1234567890", unEstado)
 documento = Document.serialize(unAlumno)
 puts documento.xml
-
-=begin
-proc = Document.proc_automatico(unAlumno.children)
-puts "Antes"
-proc.call
-puts "Despues"
-=end
 
 ###########
 # Punto 1 #
 ###########
+=begin
 documento = Document.new do
   alumno nombre: "Matias", legajo: "123456-7" do
     telefono { "1234567890" }
@@ -139,6 +116,8 @@ documento = Document.new do
     end
   end
 end
+puts documento.xml
+=end
 
 
 
