@@ -16,6 +16,12 @@ class Tag
     self
   end
 
+  def with_attributes(parameters)
+    parameters.each do |clave, valor|
+      with_attribute(clave, valor)
+    end
+  end
+
   def with_attribute(label, value)
     @attributes[label] = value
     self

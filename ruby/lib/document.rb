@@ -2,53 +2,134 @@ require './ruby/lib/tag.rb'
 
 class Document
 
-  def initialize
+  def initialize(&proc)
     @stack_tags = []
-    @root_tag = nil
+    @tag_final = instance_eval(&proc)
+    # @tag_final = instance_exec &proc # Funciona igual
   end
-
 
   def xml
-    @root_tag.xml
+    @tag_final.xml
   end
 
-  def serialize(name, attributes, children, &block)
-
+  private def method_missing(name, *args, &proc)
     tag = Tag.with_label(name)
 
-    if @root_tag.nil?
-      @root_tag = tag
-    end
-
-
-    with_attributes(tag, attributes.empty? ? [] : attributes.first)
+    tag.with_attributes(args.empty? ? [] : args.first)
 
     @stack_tags.push(tag)
-
-    evaluate(tag, children, &block)
-
-    @stack_tags.pop(1)
+    contenido = instance_eval(&proc)
+    # contenido = instance_exec &proc # Funciona igual
+    unless contenido.is_a? Tag
+      tag.with_child(contenido)
+    end
+    @stack_tags.pop
 
     unless @stack_tags.empty?
       @stack_tags[-1].with_child(tag)
     end
 
+    tag
   end
 
-  def evaluate(tag, children, &block)
-    0   #hay que overridearlo en las clases hijo tipo template method
-  end
+  def self.serialize(object)
+=begin
+    @tag_final = Tag.with_label(objeto.class.to_s.downcase)
 
+    # Se obtienen los atributos del objeto y se meten en un hash
+    getters = objeto.instance_variables.map{ |a| a.to_s.delete_prefix('@')}.select{|m| objeto.respond_to?m}
+    atributos = Hash.new
+    getters.each { |m| atributos[m] = objeto.send(m) }
 
+    # A partir del Hash se agregar los atributos al tag
+    with_attributes(@tag_final, atributos)
+=end
 
-  def with_attributes(tag, parametros)
-    parametros.each do |clave, valor|
-      tag.with_attribute(clave, valor)
+=begin
+    Document.new do
+      send(object.class.to_s.downcase, object.normal_attributes_as_hash) &Document.proc_automatico(object.children)
     end
+=end
+    Document.new &Document.proc_automatico([object])
+  end
+
+  def self.proc_automatico(objects)
+    proc do
+      # No funciona porque "each" devuelve la lista de objetos, y solo queremos que devuelva lo que devuelve send
+      # objects.each{ |unObjeto| send(unObjeto.class.to_s.downcase, unObjeto.normal_attributes_as_hash) {  } }
+
+      # Ídem "each", pero ahora lo hace el "for"
+=begin
+      for unObjeto in objects
+        send(unObjeto.class.to_s.downcase, unObjeto.normal_attributes_as_hash) &Document.proc_automatico(unObjeto.children)
+      end
+=end
+
+      # Rompe cuando quiere evaluar &Document.proc_automatico(unObjeto.children)
+      puts "objects[0]: #{objects[0]}"
+      unObjeto = objects[0]
+      send(unObjeto.class.to_s.downcase, unObjeto.normal_attributes_as_hash) &Document.proc_automatico(unObjeto.children)
+    end
+  end
+
+end
+
+
+class Object
+  def normal_attributes_as_hash
+    atributos = Hash.new
+
+    getters
+      .select { |getter| normal?(getter) }
+      .each { |msj| atributos[msj] = send(msj) }
+
+    atributos
+  end
+
+  def getters
+    instance_variables
+      .map{ |atributo| atributo.to_s.delete_prefix('@') }
+      .select{ |msj| respond_to? msj }
+  end
+
+  def normal?(getter)
+    [String, FalseClass, TrueClass, NilClass, Numeric].include?(send(getter).class)
+  end
+
+  def children
+    getters
+      .select{|getter| !normal?(getter)}
+      .flatten #[1,2,[3,4]] -> [1,2,3,4]
+      .map{|getter| send(getter)}
   end
 end
 
+
+class Alumno
+  attr_reader :nombre, :legajo
+
+  def initialize(nombre, legajo, telefono)
+    @nombre = nombre
+    @legajo = legajo
+    @telefono = telefono
+  end
+end
+
+
+unAlumno = Alumno.new("Matias","123456-8", "1234567890")
+documento = Document.serialize(unAlumno)
+puts documento.xml
+
 =begin
+proc = Document.proc_automatico(unAlumno.children)
+puts "Antes"
+proc.call
+puts "Despues"
+=end
+
+###########
+# Punto 1 #
+###########
 documento = Document.new do
   alumno nombre: "Matias", legajo: "123456-7" do
     telefono { "1234567890" }
@@ -59,45 +140,6 @@ documento = Document.new do
   end
 end
 
-puts documento.xml
-=end
 
 
 
-
-
-=begin
-Output:
-XML:
-<alumno nombre="Matias" legajo= "123456-7">
-  <telefono>1234567890</telefono>
-  <estado es_regular=true>
-     <finales_rendidos>3</finales_rendidos>
-     <materias_aprobadas>5<materias_aprobadas>
-  </estado>
-</alumno>
-
-Orden de ejecucion:
-documento = Document.new
-documento.tag =
-
-Tag.with_label('alumno').
-  with_attribute('nombre', 'Matias').
-  with_attribute('legajo', '123456-7').
-  with_child(
-    Tag.
-      with_label('telefono').
-      with_child('1234567890')).
-      with_child(
-          Tag.
-            with_label('estado').
-            with_attribute('es_regular', true).
-            with_child(
-              Tag.
-                with_label('finales_rendidos').
-                with_child('3')).
-                with_child(
-                  Tag.
-                    with_label('materias_aprobadas').with_child('5')))
-puts documento.xml
-=end
