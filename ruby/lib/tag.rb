@@ -32,6 +32,14 @@ class Tag
     self
   end
 
+  def with_children(children)
+
+    children.each do |child|
+      with_child(child)
+    end
+
+  end
+
   def xml(level=0)
     if children.empty?
       "#{"\t" * level}<#{label}#{xml_attributes}/>"

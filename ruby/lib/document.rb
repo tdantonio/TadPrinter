@@ -4,7 +4,7 @@ class Document
 
   def initialize(&proc)
     if block_given?
-      @root_tag = TagCreatorBlocks.new(nil, (Proc.new &proc)).parent_tag
+      @root_tag = TagCreatorBlocks.new((Proc.new &proc), first_one = true).tag
     end
     # @tag_final = instance_exec &proc # Funciona igual
   end
@@ -31,14 +31,14 @@ end
 
 module TagCreator
 
+  attr_reader :tag
+
+
   def initialize(input)
     @contenido = evaluate(input)
-
   end
 
-  def parent_tag
-    @parent_tag
-  end
+
 
 
 
@@ -47,39 +47,34 @@ end
 
 class TagCreatorBlocks
   include TagCreator
+  attr_reader :tags
 
-  def initialize(parent_tag, input)
-    @parent_tag = parent_tag
+  def initialize(input, first_one = false)
+    @tags = []
     super(input)
     if @contenido.is_normal?
-      @parent_tag.with_child(@contenido)
+      @tags << @contenido
+    end
+    if first_one
+      @tag = @tags.first
     end
   end
 
-  def crear_tag(name, *args, new_input)
-    tag = Tag.with_label(name)
-    tag.with_attributes(args.empty? ? [] : args.first)
-    if @parent_tag.nil?
-      @parent_tag = tag
-    else
-      @parent_tag.with_child(tag)
-    end
-    unless new_input.nil?
-      self.class.new(tag, new_input)
-    end
-  end
 
   private def method_missing(name, *args, &block)
 
+    new_tag = Tag.with_label(name)
+    new_tag.with_attributes(args.empty? ? [] : args.first)
+
     if block_given?
-      new_input = Proc.new &block
-    else
-      new_input = nil
+      new_tag.with_children(TagCreatorBlocks.new((Proc.new &block)).tags)
     end
-    crear_tag(name, *args, new_input)
+
+    @tags << new_tag
+
   end
 
-  def interpretar(input)
+  def evaluate(input)
     instance_eval &input
   end
 
@@ -98,7 +93,6 @@ El nombre del tag raíz debe ser el nombre de la clase de X, en minúsculas.
 
 class TagCreatorObjects
   include TagCreator
-  attr_reader :tag
 
   def initialize(input)
     @tag = Tag.with_label(input.class.to_s.downcase)
@@ -281,7 +275,7 @@ documento = Document.new do
 end
 
 puts documento.xml
-=end
 
+=end
 
 
