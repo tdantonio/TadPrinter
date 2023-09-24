@@ -1,6 +1,12 @@
 class Tag
   attr_reader :label, :attributes, :children
 
+  def self.with_all(label, attributes, children)
+      with_label(label)
+      .with_attributes(attributes)
+      .with_children(children)
+  end
+
   def self.with_label(label)
     new(label)
   end
@@ -20,6 +26,7 @@ class Tag
     parameters.each do |clave, valor|
       with_attribute(clave, valor)
     end
+    self
   end
 
   def with_attribute(label, value)
@@ -33,11 +40,10 @@ class Tag
   end
 
   def with_children(children)
-
     children.each do |child|
       with_child(child)
     end
-
+    self
   end
 
   def xml(level=0)
