@@ -3,7 +3,9 @@ require_relative 'tag.rb'
 class Document
 
   def initialize(&proc)
-    @root_tag = TagCreatorBlocks.new(nil, (Proc.new &proc)).parent_tag
+    if block_given?
+      @root_tag = TagCreatorBlocks.new(nil, (Proc.new &proc)).parent_tag
+    end
     # @tag_final = instance_exec &proc # Funciona igual
   end
 
@@ -12,8 +14,8 @@ class Document
   end
 
 
-  def self.serialize(object)
-    Document.new &Document.automatic_proc([object])
+  def serialize(object)
+    @root_tag = TagCreatorObjects.new(object).tag
   end
 
   def self.automatic_proc(objects)
@@ -29,14 +31,29 @@ end
 
 module TagCreator
 
-  def initialize(parent_tag, input)
-    @parent_tag = parent_tag
-    @contenido = interpretar(input)
+  def initialize(input)
+    @contenido = evaluate(input)
 
   end
 
   def parent_tag
     @parent_tag
+  end
+
+
+
+
+end
+
+class TagCreatorBlocks
+  include TagCreator
+
+  def initialize(parent_tag, input)
+    @parent_tag = parent_tag
+    super(input)
+    if @contenido.is_normal?
+      @parent_tag.with_child(@contenido)
+    end
   end
 
   def crear_tag(name, *args, new_input)
@@ -49,19 +66,6 @@ module TagCreator
     end
     unless new_input.nil?
       self.class.new(tag, new_input)
-    end
-  end
-
-
-end
-
-class TagCreatorBlocks
-  include TagCreator
-
-  def initialize(parent_tag, input)
-    super
-    if @contenido.normal?
-      @parent_tag.with_child(@contenido)
     end
   end
 
@@ -83,12 +87,107 @@ class TagCreatorBlocks
 
 end
 
-class TagCreatorObjetos
+=begin
+El nombre del tag raíz debe ser el nombre de la clase de X, en minúsculas.
+  Los atributos de X que no tengan definido un getter se ignoran.
+    Los atributos de X con getter que referencian a Strings, Booleanos, Números o nil se deben serializar como atributos del tag raíz.
+  Los atributos de X con getter que referencian a Arrays de objetos de cualquier tipo deben serializarse cómo tags hijos, conteniendo un nuevo tag hijo por cada elemento del array. Estos tags deben llamarse como la clase de los valores que representan.
+  Los atributos de X con getter que referencian a cualquier otro tipo de objeto se deben serializar cómo tags hijos del tag raíz, cada uno con el nombre del atributo en cuestión.
+=end
+
+
+class TagCreatorObjects
   include TagCreator
+  attr_reader :tag
+
+  def initialize(input)
+    @tag = Tag.with_label(input.class.to_s.downcase)
+    super(input)
+  end
+
+  def evaluate(object)
+    @instance_attributes = object.instance_variables_with_getters
+    @instance_attributes.each do |name, value|
+      factory_attributes(name, value).adopt_itself(@tag)
+
+    end
+
+  end
+
+  def factory_attributes(name, value)
+    if value.is_a? Array
+      ArrayAttribute.new(name, value)
+    elsif value.is_normal?
+      AttributeWithGetter.new(name, value)
+    else
+      ObjectAttribute.new(name, value)
+    end
+  end
+
+
 
 
 end
 
+module Attribute
+  def initialize(name, value)
+    @name = name
+    @value = value
+  end
+
+end
+
+class AttributeWithGetter
+
+  include Attribute
+
+  def adopt_itself(parent)
+    parent.with_attribute(@name, @value)
+  end
+
+end
+
+class ArrayAttribute
+
+  include Attribute
+
+  def initialize(name, value)
+    super(name, value)
+    @tag = Tag.with_label(name)
+  end
+
+  def add_children
+    @value.each do |child|
+      if child.class.is_normal?
+        new_tag = Tag.with_label(child.class.to_s.downcase)
+        new_tag.with_child(child)
+      else
+        new_tag = TagCreatorObjects.new(child).tag
+
+    end
+      @tag.with_child(new_tag)
+    end
+  end
+
+  def adopt_itself(parent)
+    add_children
+    parent.with_child(@tag)
+  end
+
+
+
+end
+
+
+class ObjectAttribute
+
+  include Attribute
+
+  def adopt_itself(parent)
+    parent.with_child(TagCreatorObjects.new(@value).tag)
+  end
+
+end
 
 class Object
   def normal_attributes_as_hash
@@ -107,11 +206,29 @@ class Object
       .select{ |msj| respond_to? msj }
   end
 
-  def normal_attribute?(getter)
-    send(getter).normal?
+  def instance_variables_with_getters
+    result = {}
+    self.class.instance_methods(false).each do |method_name|
+      if method_name.to_s.end_with?("=")
+        # Skip setter methods
+        next
+      end
+
+      getter_method = method_name
+      if respond_to?(getter_method) && instance_variable_defined?("@#{getter_method}")
+        # Check if there's a corresponding getter method and instance variable
+        value = instance_variable_get("@#{getter_method}")
+        result[getter_method] = value
+      end
+    end
+    result
   end
 
-  def normal?
+  def normal_attribute?(getter)
+    send(getter).is_normal?
+  end
+
+  def is_normal?
     normal_classes = [String, FalseClass, TrueClass, NilClass, Numeric]
     normal_classes.any?{ |normal_class| is_a? normal_class }
   end
@@ -124,7 +241,7 @@ class Object
   end
 end
 
-=begin
+
 
 class Alumno
   attr_reader :nombre, :legajo, :estado
@@ -148,10 +265,11 @@ end
 
 estado = Estado.new(3, 5, true)
 alumno = Alumno.new("Matias","123456-8", "1234567890", estado)
-documento = Document.serialize(alumno)
+documento = Document.new
+documento.serialize(alumno)
 puts documento.xml
-=end
 
+=begin
 documento = Document.new do
   alumno nombre: "Matias", legajo: "123456-7" do
     telefono { "1234567890" }
@@ -163,6 +281,7 @@ documento = Document.new do
 end
 
 puts documento.xml
+=end
 
 
 
