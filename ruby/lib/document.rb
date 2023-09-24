@@ -3,8 +3,7 @@ require_relative 'tag.rb'
 class Document
 
   def initialize(&proc)
-    @stack_tags = []
-    instance_eval &proc
+    @root_tag = TagCreator.new(nil, (Proc.new &proc)).parent_tag
     # @tag_final = instance_exec &proc # Funciona igual
   end
 
@@ -12,33 +11,6 @@ class Document
     @root_tag.xml
   end
 
-  private def method_missing(name, *args, &proc)
-    tag = Tag.with_label(name)
-
-    if @root_tag.nil?
-      @root_tag = tag
-    end
-
-    tag.with_attributes(args.empty? ? [] : args.first)
-
-    @stack_tags.push(tag)
-    contenido = instance_eval(&proc) # wtf se pueden pasar bloques por parámetro??
-
-    # El proc también puede devolver un Tag o un Array, pero:
-    # Para el punto 2: solo queremos evaluarlo
-    # Para el punto 1: solo queremos guardar el contenido si es final (normal)
-    if contenido.normal?
-      tag.with_child(contenido)
-    end
-
-    @stack_tags.pop
-
-    unless @stack_tags.empty?
-      @stack_tags[-1].with_child(tag)
-    end
-
-    tag
-  end
 
   def self.serialize(object)
     Document.new &Document.automatic_proc([object])
@@ -53,6 +25,44 @@ class Document
   end
 end
 
+
+
+class TagCreator
+
+  def initialize(parent_tag, input)
+    @parent_tag = parent_tag
+    contenido = interpretar(input)
+    if contenido.normal?
+      @parent_tag.with_child(contenido)
+    end
+  end
+
+  def parent_tag
+    @parent_tag
+  end
+
+  def interpretar(input)
+    contenido = instance_eval &input
+  end
+
+  private def method_missing(name, *args, &block)
+    tag = Tag.with_label(name)
+    tag.with_attributes(args.empty? ? [] : args.first)
+    unless @parent_tag.nil?
+      @parent_tag.with_child(tag)
+    else
+      @parent_tag = tag
+    end
+    if block_given?
+      TagCreator.new(tag, (Proc.new &block))
+    end
+
+  end
+
+
+
+
+end
 
 class Object
   def normal_attributes_as_hash
@@ -88,6 +98,7 @@ class Object
   end
 end
 
+=begin
 
 class Alumno
   attr_reader :nombre, :legajo, :estado
@@ -113,8 +124,8 @@ estado = Estado.new(3, 5, true)
 alumno = Alumno.new("Matias","123456-8", "1234567890", estado)
 documento = Document.serialize(alumno)
 puts documento.xml
+=end
 
-=begin
 documento = Document.new do
   alumno nombre: "Matias", legajo: "123456-7" do
     telefono { "1234567890" }
@@ -126,7 +137,6 @@ documento = Document.new do
 end
 
 puts documento.xml
-=end
 
 
 
