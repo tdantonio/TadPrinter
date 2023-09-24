@@ -4,8 +4,7 @@ class Document
   attr_writer :root_tag
   def initialize(&proc)
     if block_given?
-      @root_tag = ContextEvaluator.new.instance_eval(&proc).first
-      # @root_tag = Document.root_tag(proc, :instance_eval)
+      @root_tag = Document.root_tag(proc)
     end
   end
 
@@ -14,13 +13,13 @@ class Document
   end
 
   def self.serialize(object)
-    Document.new.root_tag=(ContextEvaluator.new.serialize(object).first)
-    # Document.new.root_tag=(root_tag(object, :serialize))
+    Document.new.root_tag=(root_tag(object))
   end
 
-  # Idea para evitar repetición de lógica(? ni idea, no estoy ni seguro de que la haya
-  def self.root_tag(wachin, msj)
-    ContextEvaluator.new.send(msj, wachin).first # no funciona pq instance_eval recibe un bloque, no un wachin
+  def self.root_tag(wachin)
+    tipo = wachin.is_a?(Proc) ? "proc" : "object" # Me la compliqué al pedo pero qsy (no funciona simplemente con wachin.label)
+    serializer_msj = "tag_" + tipo
+    ContextEvaluator.new.send(serializer_msj, wachin).first
   end
 end
 
@@ -32,30 +31,41 @@ class ContextEvaluator
   ###########
   # Punto 1 #
   ###########
+  def tag_proc(proc) # Solo sirve de pasamano para que :root_tag pueda recibirlo como un objeto también.
+    instance_eval(&proc)
+  end
   private def method_missing(name, *args, &proc)
-    tag_children(name, args.empty? ? {} : args.first, ContextEvaluator.new.instance_eval(&proc))
+    attributes = args.empty? ? {} : args.first
+    children_tags = ContextEvaluator.new.instance_eval(&proc)
+    tag_with_children(name, attributes, children_tags)
   end
 
-  def tag_children(label, attributes, possible_children)
-    children = [possible_children].flatten # [1,2,[3,4]] -> [1,2,3,4]
-    @tags << Tag.with_all(label, attributes, children)
+  def tag_with_children(label, attributes, possible_children_tags)
+    children_tags = [possible_children_tags].flatten # [1,2,[3,4,[5]]] -> [1,2,3,4,5]
+    @tags << Tag.with_everything(label, attributes, children_tags)
+    # Si tiene más de un hijo, para los primeros se ignora el retorno, pero los va guardando en la lista.
+    # Solo devuelve la lista de tags cuando está completa, es decir, para el último hijo.
   end
 
   ###########
   # Punto 2 #
   ###########
-  def serialize(object)
-    tag_children(object.label, object.primitive_attributes_as_hash, object_children(object.children))
+  def tag_object(object) # Al principio lo había llamado solo :tag, pero entonces no tenía un buen nombre para :tag_proc (que antes era :evaluate).
+    children_tags = tag_all(object.children)
+    tag_with_children(object.label, object.primitive_attributes_as_hash, children_tags)
   end
 
-  def object_children(children)
+  def tag_all(children)
     children.map do |child|
-      ContextEvaluator.new.serialize(child)
+      child.primitive? ? child : ContextEvaluator.new.tag_object(child)
     end
   end
 end
 
 class Object
+  def label
+    self.class.to_s.downcase
+  end
 
   def primitive_attributes_as_hash
     atributos = Hash.new
@@ -82,25 +92,22 @@ class Object
     primitive_classes.any?{ |primitive_class| is_a? primitive_class }
   end
 
-  def label
-    self.class.to_s.downcase
-  end
-
   def children
     getters
-      .select{|getter| !primitive_attribute?(getter) }
+      .select{ |getter| !primitive_attribute?(getter) }
+      .map{ |getter| send(getter) }
       .flatten #[1,2,[3,4]] -> [1,2,3,4]
-      .map{|getter| send(getter)}
   end
 end
 
 class Alumno
-  attr_reader :nombre, :legajo, :estado
-  def initialize(nombre, legajo, telefono, estado)
+  attr_reader :nombre, :legajo, :estado, :cositas
+  def initialize(nombre, legajo, telefono, estado, cositas)
     @nombre = nombre
     @legajo = legajo
     @telefono = telefono
     @estado = estado
+    @cositas = cositas
   end
 end
 
@@ -113,7 +120,20 @@ class Estado
   end
 end
 
+puts "\ndocumento_manual:\n"
+documento_manual = Document.new do
+  alumno nombre: "Matias", legajo: "123456-7" do
+    telefono { "1234567890" }
+    estado es_regular: true do
+      finales_rendidos { 3 }
+      materias_aprobadas { 5 }
+    end
+  end
+end
+puts documento_manual.xml
+
+puts "\ndocumento_automatico:\n"
 estado = Estado.new(3, 5, true) # TODO: No se pone en orden correcto, chequear implementación
-alumno = Alumno.new("Matias","123456-8", "1234567890", estado)
+alumno = Alumno.new("Matias","123456-8", "1234567890", estado, [1, estado])
 documento_automatico = Document.serialize(alumno)
 puts documento_automatico.xml

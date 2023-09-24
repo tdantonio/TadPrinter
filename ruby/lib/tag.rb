@@ -1,7 +1,7 @@
 class Tag
   attr_reader :label, :attributes, :children
 
-  def self.with_all(label, attributes, children)
+  def self.with_everything(label, attributes, children)
       with_label(label)
       .with_attributes(attributes)
       .with_children(children)
@@ -34,15 +34,15 @@ class Tag
     self
   end
 
-  def with_child(child)
-    @children << child
-    self
-  end
-
   def with_children(children)
     children.each do |child|
       with_child(child)
     end
+    self
+  end
+
+  def with_child(child)
+    @children << child
     self
   end
 
