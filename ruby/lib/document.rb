@@ -3,7 +3,7 @@ require_relative 'tag.rb'
 class Document
 
   def initialize(&proc)
-    @root_tag = TagCreator.new(nil, (Proc.new &proc)).parent_tag
+    @root_tag = TagCreatorBlocks.new(nil, (Proc.new &proc)).parent_tag
     # @tag_final = instance_exec &proc # Funciona igual
   end
 
@@ -27,42 +27,68 @@ end
 
 
 
-class TagCreator
+module TagCreator
 
   def initialize(parent_tag, input)
     @parent_tag = parent_tag
-    contenido = interpretar(input)
-    if contenido.normal?
-      @parent_tag.with_child(contenido)
-    end
+    @contenido = interpretar(input)
+
   end
 
   def parent_tag
     @parent_tag
   end
 
-  def interpretar(input)
-    contenido = instance_eval &input
+  def crear_tag(name, *args, new_input)
+    tag = Tag.with_label(name)
+    tag.with_attributes(args.empty? ? [] : args.first)
+    if @parent_tag.nil?
+      @parent_tag = tag
+    else
+      @parent_tag.with_child(tag)
+    end
+    unless new_input.nil?
+      self.class.new(tag, new_input)
+    end
+  end
+
+
+end
+
+class TagCreatorBlocks
+  include TagCreator
+
+  def initialize(parent_tag, input)
+    super
+    if @contenido.normal?
+      @parent_tag.with_child(@contenido)
+    end
   end
 
   private def method_missing(name, *args, &block)
-    tag = Tag.with_label(name)
-    tag.with_attributes(args.empty? ? [] : args.first)
-    unless @parent_tag.nil?
-      @parent_tag.with_child(tag)
-    else
-      @parent_tag = tag
-    end
-    if block_given?
-      TagCreator.new(tag, (Proc.new &block))
-    end
 
+    if block_given?
+      new_input = Proc.new &block
+    else
+      new_input = nil
+    end
+    crear_tag(name, *args, new_input)
   end
 
+  def interpretar(input)
+    instance_eval &input
+  end
 
 
 
 end
+
+class TagCreatorObjetos
+  include TagCreator
+
+
+end
+
 
 class Object
   def normal_attributes_as_hash
