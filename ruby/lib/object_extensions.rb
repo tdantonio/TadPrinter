@@ -53,7 +53,7 @@ class Object
 
   def is_normal?
     normal_classes = [String, FalseClass, TrueClass, NilClass, Numeric]
-    normal_classes.any?{ |normal_class| is_a? normal_class }
+    normal_classes.any?{ |normal_class| self.is_a? normal_class }
   end
 
 =begin

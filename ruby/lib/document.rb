@@ -31,7 +31,6 @@ end
 
 
 #testeo objects
-=begin
 class Alumno
   attr_reader :nombre, :legajo, :estado
   def initialize(nombre, legajo, telefono, estado)
@@ -52,12 +51,11 @@ class Estado
   end
 end
 
-estado = Estado.new(3, ["dds", "so"], true)
+estado = Estado.new(3, %w[dds so], true)
 alumno = Alumno.new("Matias","123456-8", "1234567890", estado)
 documento = Document.new
 documento.serialize(alumno)
 puts documento.xml
-=end
 
 
 #testeo blocks

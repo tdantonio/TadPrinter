@@ -8,15 +8,9 @@ module TagCreator
 
   attr_reader :tag
 
-
   def initialize(input)
     @contenido = evaluate(input)
   end
-
-
-
-
-
 
 end
 
@@ -84,4 +78,4 @@ class TagCreatorObjects
       ObjectAttribute.new(name, value)
     end
   end
-  end
+end
