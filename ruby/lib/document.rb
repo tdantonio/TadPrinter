@@ -100,40 +100,68 @@ class Object
   end
 end
 
-class Alumno
-  attr_reader :nombre, :legajo, :estado, :cositas
-  def initialize(nombre, legajo, telefono, estado, cositas)
-    @nombre = nombre
-    @legajo = legajo
-    @telefono = telefono
-    @estado = estado
-    @cositas = cositas
+def method_missing(annotation_name, *args)
+  if annotation_name.match? "✨.*✨"
+    Object.const_get(annotation_name.to_s.gsub('✨','')).new(*args) # TODO: falta lanzar un error más descriptivo en caso de que no matchee con ninguna clase existente
+  else
+    super(annotation_name, *args) # warning: redefining Object#method_missing may cause infinite loop
   end
 end
 
-class Estado
-  attr_reader :finales_rendidos, :materias_aprobadas, :es_regular
-  def initialize(finales_rendidos, materias_aprobadas, es_regular)
-    @finales_rendidos = finales_rendidos
-    @es_regular = es_regular
-    @materias_aprobadas = materias_aprobadas
+class Annotator # Tiene que definirse antes de extender a Class
+  @pending_annotations = []
+  def self.add_pending_annotation(annotation)
+    @pending_annotations << annotation
+  end
+
+  def self.add_pending_annotations_to(clase)
+    clase.add_annotations(@pending_annotations)
+    @pending_annotations = []
   end
 end
 
-puts "\ndocumento_manual:\n"
-documento_manual = Document.new do
-  alumno nombre: "Matias", legajo: "123456-7" do
-    telefono { "1234567890" }
-    estado es_regular: true do
-      finales_rendidos { 3 }
-      materias_aprobadas { 5 }
+class Class
+  def inherited(subclass)
+    Annotator.add_pending_annotations_to(subclass)
+  end
+
+  def add_annotations(annotations)
+    @annotations = annotations
+  end
+
+  def evaluate_annotations
+    @annotations.each do |annotation|
+      annotation.evaluate(self)
     end
   end
 end
-puts documento_manual.xml
 
-puts "\ndocumento_automatico:\n"
-estado = Estado.new(3, 5, true) # TODO: No se pone en orden correcto, chequear implementación
-alumno = Alumno.new("Matias","123456-8", "1234567890", estado, [1, estado])
-documento_automatico = Document.serialize(alumno)
-puts documento_automatico.xml
+class Label
+  def initialize(label)
+    @label = label
+    Annotator.add_pending_annotation(self)
+  end
+
+  def evaluate(clase)
+    label = @label # TODO: Hardcodeado nashe
+    clase.define_method(:label) { label }
+  end
+end
+
+######################
+# Espacio de pruebas #
+######################
+✨Label✨("falopA")
+class A
+end
+
+C = Class.new
+D = Object.new
+class B
+end
+
+A.evaluate_annotations
+
+puts "A.new.label: #{A.new.label}"
+puts "B.new.label: #{B.new.label}"
+puts "C.new.label: #{C.new.label}"

@@ -1,3 +1,6 @@
+require_relative '../lib/tag.rb'
+require_relative '../lib/document.rb'
+
 describe Document do
   describe '#xml' do
 
