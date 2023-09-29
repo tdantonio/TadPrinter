@@ -29,17 +29,33 @@ end
 ######################
 # Espacio de pruebas #
 ######################
-✨Label✨("falopA")
-class A
+class Alumno
+  attr_reader :nombre, :telefono
+  attr_reader :legajo, :estado
+
+  def initialize(nombre, legajo, telefono, estado, dni)
+    @nombre = nombre
+    @legajo = legajo
+    @telefono = telefono
+    @estado = estado
+    @dni = dni
+  end
+
+  def dni
+    @dni
+  end
 end
 
-C = Class.new
-D = Object.new
-class B
+✨Ignore✨
+class Estado
+  attr_reader :finales_rendidos, :materias_aprobadas, :es_regular
+  def initialize(finales_rendidos, materias_aprobadas, es_regular)
+    @finales_rendidos = finales_rendidos
+    @es_regular = es_regular
+    @materias_aprobadas = materias_aprobadas
+  end
 end
 
-A.evaluate_annotations
-
-puts "A.new.label: #{A.new.label}"
-puts "B.new.label: #{B.new.label}"
-puts "C.new.label: #{C.new.label}"
+unEstado = Estado.new(3, 5, true)
+unAlumno = Alumno.new("Matias","123456-7", "1234567890", unEstado, "12345678")
+puts Document.serialize(unAlumno).xml

@@ -18,11 +18,7 @@ class Class
   end
 
   def add_annotations(annotations)
-    @annotations = annotations
-  end
-
-  def evaluate_annotations
-    @annotations.each do |annotation|
+    annotations.each do |annotation|
       annotation.evaluate(self)
     end
   end

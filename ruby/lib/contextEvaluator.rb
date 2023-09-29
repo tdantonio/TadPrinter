@@ -35,6 +35,7 @@ class ContextEvaluator
 
   def tag_all(children)
     children.map do |child|
+      # ContextEvaluator.new.tag_object(child) # TODO: fijarse cuál cumple mejor el requerimiento
       child.primitive? ? child : ContextEvaluator.new.tag_object(child)
     end
   end
@@ -72,9 +73,13 @@ class Object
   end
 
   def children
-    getters
-      .select{ |getter| !primitive_attribute?(getter) }
+    getters # TODO: ídem :primitive_attributes_as_hash
+      .select{ |getter| not primitive_attribute?(getter) and not send(getter).ignore?}
       .map{ |getter| send(getter) }
       .flatten #[1,2,[3,4]] -> [1,2,3,4]
+  end
+
+  def ignore? # TODO: No me gusta para nada
+    false
   end
 end
