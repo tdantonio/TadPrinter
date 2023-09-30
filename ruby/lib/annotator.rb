@@ -26,7 +26,9 @@ end
 
 def method_missing(annotation_name, *args)
   if annotation_name.match? "✨.*✨"
-    Object.const_get(annotation_name.to_s.gsub('✨','')).new(*args) # TODO: falta lanzar un error más descriptivo en caso de que no matchee con ninguna clase existente
+    annotation_class = Object.const_get(annotation_name.to_s.gsub('✨',''))
+    # TODO: falta lanzar un error más descriptivo en caso de que no matchee con ninguna clase existente
+    Annotator.add_pending_annotation(annotation_class.new(*args))
   else
     super(annotation_name, *args) # warning: redefining Object#method_missing may cause infinite loop
   end

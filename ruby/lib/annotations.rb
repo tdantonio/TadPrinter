@@ -3,7 +3,6 @@
 class Label
   def initialize(label)
     @label = label
-    Annotator.add_pending_annotation(self)
   end
 
   def evaluate(clase)
@@ -13,9 +12,6 @@ class Label
 end
 
 class Ignore
-  def initialize
-    Annotator.add_pending_annotation(self) # TODO: eliminar repetición de lógica
-  end
   def evaluate(clase)
     clase.define_method(:ignore?) { true }
   end
@@ -26,7 +22,7 @@ class Inline
     @proc_converter = proc_converter
   end
 
-  def evaluate(clase)
+  def evaluate(campo)
     # TODO
   end
 end
