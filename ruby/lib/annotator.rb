@@ -24,12 +24,40 @@ class Class
   end
 end
 
-def method_missing(annotation_name, *args)
-  if annotation_name.match? "✨.*✨"
-    annotation_class = Object.const_get(annotation_name.to_s.gsub('✨',''))
-    # TODO: falta lanzar un error más descriptivo en caso de que no matchee con ninguna clase existente
-    Annotator.add_pending_annotation(annotation_class.new(*args))
-  else
-    super(annotation_name, *args) # warning: redefining Object#method_missing may cause infinite loop
+# Hay alta repetición de lógica igual pero bueno, todo para ahorrar usar el method_missing
+class << self
+  def ✨Label✨(new_label)
+
+    Annotator.add_pending_annotation(Label.new(new_label))
+  end
+
+  def ✨Ignore✨
+    Annotator.add_pending_annotation(Ignore.new)
+  end
+
+  def ✨Custom✨(&proc)
+    Annotator.add_pending_annotation(Custom.new(&proc))
   end
 end
+=begin
+Idea para evitar repetición de lógica:
+- Hacer que cada annotation herede de Annotation, quien tiene un initialize que
+haga el Annotator.add_pending_annotation(Ignore.new)
+(Rompe porque cada Annotation tiene q inicialiarse de una forma distinta)
+=end
+
+
+# TODO: ¿Cuál es la diferencia con lo siguiente?
+=begin
+def ✨Label✨(new_label)
+  Annotator.add_pending_annotation(Label.new(new_label))
+end
+
+def ✨Ignore✨
+  Annotator.add_pending_annotation(Ignore.new)
+end
+
+def ✨Custom✨(&proc)
+  Annotator.add_pending_annotation(Custom.new(&proc))
+end
+=end
