@@ -89,5 +89,13 @@ describe Document do
       unAlumno = AlumnoLabelParaClases.new("Matias","123456-7", "1234567890", unEstado)
       expect(Document.serialize(unAlumno).xml).to eq(tag.xml)
     end
+
+    it 'Ignore funciona para clases' do
+      tag = Tag.with_label("alumnoignoreparaclases").with_attribute(:legajo, "123456-7")
+
+      unEstado = EstadoIgnoreParaClases.new(3, 5, true)
+      unAlumno = AlumnoIgnoreParaClases.new("Matias","123456-7", "1234567890", unEstado, "12345678")
+      expect(Document.serialize(unAlumno).xml).to eq(tag.xml)
+    end
   end
 end
