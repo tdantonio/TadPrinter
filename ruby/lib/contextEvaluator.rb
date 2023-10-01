@@ -14,7 +14,7 @@ class ContextEvaluator
   end
   private def method_missing(name, *args, &proc)
     attributes = args.empty? ? {} : args.first
-    children_tags = ContextEvaluator.new.instance_eval(&proc)
+    children_tags = block_given? ? ContextEvaluator.new.instance_eval(&proc) : []
     tag_with_children(name, attributes, children_tags)
   end
 

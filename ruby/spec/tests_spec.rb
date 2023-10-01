@@ -1,10 +1,6 @@
-require_relative '../lib/tag.rb'
-require_relative '../lib/document.rb'
-
 describe Document do
-  describe '#xml' do
-
-    it 'Punto 1' do
+  context 'Punto 1' do
+    it 'DLS correcto' do
       documento = Document.new do
         alumno nombre: "Matias", legajo: "123456-7" do
           telefono { "1234567890" }
@@ -35,11 +31,32 @@ describe Document do
                )
       expect(documento.xml).to eq(tag.xml)
     end
+  end
 
-    it 'Punto 2: documento_manual == documento_automatico' do
-      estado = Estado.new(3, 5, true) # TODO: No se pone en orden correcto, chequear implementación
-      alumno = Alumno.new("Matias","123456-8", "1234567890", estado)
-      documento_automatico = Document.serialize(alumno)
+  context 'Punto 2' do
+    class Alumno
+      attr_reader :nombre, :legajo, :estado
+      def initialize(nombre, legajo, telefono, estado)
+        @nombre = nombre
+        @legajo = legajo
+        @telefono = telefono
+        @estado = estado
+      end
+    end
+
+    class Estado
+      attr_reader :finales_rendidos, :materias_aprobadas, :es_regular
+      def initialize(finales_rendidos, materias_aprobadas, es_regular)
+        @finales_rendidos = finales_rendidos
+        @es_regular = es_regular
+        @materias_aprobadas = materias_aprobadas
+      end
+    end
+
+    it 'documento_manual == documento_automatico' do
+      unEstado = Estado.new(3, 5, true) # TODO: No se pone en orden correcto, chequear implementación
+      unAlumno = Alumno.new("Matias","123456-8", "1234567890", unEstado)
+      documento_automatico = Document.serialize(unAlumno)
       tag = Tag.with_label('alumno')
                .with_attribute('nombre','Matias')
                .with_attribute('legajo', '123456-8')
@@ -49,7 +66,17 @@ describe Document do
                     .with_attribute('es_regular', true)
                     .with_attribute('materias_aprobadas', 5)
                  )
+
+      documento_manual = Document.new do
+        alumno nombre: unAlumno.nombre, legajo: unAlumno.legajo do
+          estado finales_rendidos: unAlumno.estado.finales_rendidos,
+                 materias_aprobadas: unAlumno.estado.materias_aprobadas,
+                 es_regular: unAlumno.estado.es_regular
+        end
+      end
+
       expect(documento_automatico.xml).to eq(tag.xml)
+      expect(documento_manual.xml).to eq(documento_automatico.xml)
     end
   end
 end

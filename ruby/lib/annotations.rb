@@ -1,8 +1,17 @@
-# frozen_string_literal: true
+class Annotation
+  def initialize
+    Annotator.add_pending_annotation(self)
+  end
 
-class Label
+  def included
+
+  end
+end
+
+class Label < Annotation
   def initialize(label)
     @label = label
+    super() # Hay que poner paréntesis porque, sino, le pasa implícitamente los parámetros q recibe (en este caso, label)
   end
 
   def evaluate(clase)
@@ -11,15 +20,16 @@ class Label
   end
 end
 
-class Ignore
+class Ignore < Annotation
   def evaluate(clase)
     clase.define_method(:ignore?) { true }
   end
 end
 
-class Inline
+class Inline < Annotation
   def initialize(&proc_converter)
     @proc_converter = proc_converter
+    super()
   end
 
   def evaluate(campo)
@@ -27,9 +37,10 @@ class Inline
   end
 end
 
-class Custom
+class Custom < Annotation
   def initialize(&proc_serializer)
     @proc_serializer = proc_serializer
+    super()
   end
 
   def evaluate(clase)
