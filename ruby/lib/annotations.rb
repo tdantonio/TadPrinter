@@ -1,17 +1,21 @@
+# Defino variable global para main
+$main = self
+
 class Annotation
-  def initialize
-    Annotator.add_pending_annotation(self)
+  def self.inherited(subclass)
+    $main.define_singleton_method(subclass.annotation_name) do |*args|
+      Annotator.add_pending_annotation(subclass.new(*args))
+    end
   end
 
-  def included
-
+  def self.annotation_name
+    "✨#{name}✨"
   end
 end
 
 class Label < Annotation
   def initialize(label)
     @label = label
-    super() # Hay que poner paréntesis porque, sino, le pasa implícitamente los parámetros q recibe (en este caso, label)
   end
 
   def evaluate(clase)
@@ -29,7 +33,6 @@ end
 class Inline < Annotation
   def initialize(&proc_converter)
     @proc_converter = proc_converter
-    super()
   end
 
   def evaluate(campo)
@@ -40,7 +43,6 @@ end
 class Custom < Annotation
   def initialize(&proc_serializer)
     @proc_serializer = proc_serializer
-    super()
   end
 
   def evaluate(clase)

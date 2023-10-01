@@ -1,13 +1,5 @@
-require_relative 'tag'
-require_relative 'contextEvaluator'
-require_relative 'annotator'
-require_relative 'annotations'
-require_relative 'document'
-
-######################
-# Espacio de pruebas #
-######################
-class Alumno
+✨Label✨("estudiante")
+class AlumnoLabelParaClases
   attr_reader :nombre, :legajo, :estado
   def initialize(nombre, legajo, telefono, estado)
     @nombre = nombre
@@ -15,9 +7,13 @@ class Alumno
     @telefono = telefono
     @estado = estado
   end
+  def telefono
+    @telefono
+  end
 end
 
-class Estado
+✨Label✨("situacion")
+class EstadoLabelParaClases
   attr_reader :finales_rendidos, :materias_aprobadas, :es_regular
   def initialize(finales_rendidos, materias_aprobadas, es_regular)
     @finales_rendidos = finales_rendidos
@@ -25,4 +21,3 @@ class Estado
     @materias_aprobadas = materias_aprobadas
   end
 end
-

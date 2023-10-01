@@ -79,4 +79,15 @@ describe Document do
       expect(documento_manual.xml).to eq(documento_automatico.xml)
     end
   end
+
+  context 'Punto 3' do
+    it 'Label funciona para clases' do
+      tag = Tag.with_everything("estudiante", {nombre: "Matias", legajo: "123456-7", telefono: "1234567890"}, [
+                                Tag.with_everything("situacion", {finales_rendidos: 3, es_regular: true, materias_aprobadas: 5}, [])])
+
+      unEstado = EstadoLabelParaClases.new(3, 5, true) # TODO: No se pone en orden correcto, chequear implementación
+      unAlumno = AlumnoLabelParaClases.new("Matias","123456-7", "1234567890", unEstado)
+      expect(Document.serialize(unAlumno).xml).to eq(tag.xml)
+    end
+  end
 end
