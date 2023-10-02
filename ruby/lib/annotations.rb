@@ -1,10 +1,10 @@
 # Defino variable global para main
 $main = self
 
-class Annotation
+class Annotation # TODO: no me gusta que hereden solo para saber si Annotation fue heredado
   def self.inherited(subclass)
-    $main.define_singleton_method(subclass.annotation_name) do |*args|
-      Annotator.add_pending_annotation(subclass.new(*args))
+    $main.define_singleton_method(subclass.annotation_name) do |*args, &proc|
+      Annotator.add_pending_annotation(subclass.new(*args, &proc))
     end
   end
 
@@ -46,6 +46,10 @@ class Custom < Annotation
   end
 
   def evaluate(clase)
-    # TODO
+    proc_serializer = @proc_serializer
+    clase.define_singleton_method(:tag_instance) do |instance|
+      children_tags = ContextEvaluator.new.instance_exec(instance, &proc_serializer)
+      Tag.with_everything(instance.label, {}, children_tags)
+    end
   end
 end

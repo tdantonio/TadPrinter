@@ -1,23 +1,23 @@
-require_relative 'tag'
-require_relative 'contextEvaluator'
-require_relative 'annotator'
-require_relative 'annotations'
-require_relative 'document'
+class AlumnoCustomParaClases
 
-######################
-# Espacio de pruebas #
-######################
-class Alumno
-  attr_reader :nombre, :legajo, :estado
+  attr_reader :nombre, :legajo, :telefono
+
+  attr_reader :estado
+
   def initialize(nombre, legajo, telefono, estado)
     @nombre = nombre
     @legajo = legajo
     @telefono = telefono
     @estado = estado
   end
+
 end
 
-class Estado
+✨Custom✨ do |estado|
+  regular { estado.es_regular }
+  pendientes { estado.materias_aprobadas - estado.finales_rendidos }
+end
+class EstadoCustomParaClases
   attr_reader :finales_rendidos, :materias_aprobadas, :es_regular
   def initialize(finales_rendidos, materias_aprobadas, es_regular)
     @finales_rendidos = finales_rendidos

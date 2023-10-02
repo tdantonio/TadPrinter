@@ -75,8 +75,8 @@ describe Document do
         end
       end
 
-      expect(documento_automatico.xml).to eq(tag.xml)
-      expect(documento_manual.xml).to eq(documento_automatico.xml)
+      expect(documento_automatico.xml).to eq(documento_manual.xml)
+      expect(documento_manual.xml).to eq(tag.xml)
     end
   end
 
@@ -95,6 +95,21 @@ describe Document do
 
       unEstado = EstadoIgnoreParaClases.new(3, 5, true)
       unAlumno = AlumnoIgnoreParaClases.new("Matias","123456-7", "1234567890", unEstado, "12345678")
+      expect(Document.serialize(unAlumno).xml).to eq(tag.xml)
+    end
+
+    it 'Custom funciona para clases' do
+      tag = Tag.with_everything("alumnocustomparaclases", { nombre: "Matias", legajo: "123456-7", telefono: "1234567890"}, [
+        Tag.with_everything("estadocustomparaclases", {}, [
+          Tag.with_label("regular").with_child(true),
+          Tag.with_label("pendientes").with_child(2)
+        ])
+      ])
+
+      unEstado = EstadoCustomParaClases.new(3, 5, true)
+      unAlumno = AlumnoCustomParaClases.new("Matias","123456-7", "1234567890", unEstado)
+      puts "\n\n\n" + tag.xml + "\n\n\n"
+      puts Document.serialize(unAlumno).xml + "\n\n\n"
       expect(Document.serialize(unAlumno).xml).to eq(tag.xml)
     end
   end
