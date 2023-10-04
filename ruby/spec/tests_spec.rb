@@ -83,7 +83,7 @@ describe Document do
   context 'Punto 3' do
     it 'Label funciona para clases' do
       tag = Tag.with_everything("estudiante", {nombre: "Matias", legajo: "123456-7", telefono: "1234567890"}, [
-                                Tag.with_everything("situacion", {finales_rendidos: 3, es_regular: true, materias_aprobadas: 5}, [])])
+                                Tag.with_everything("estado", {finales_rendidos: 3, es_regular: true, materias_aprobadas: 5}, [])])
 
       unEstado = EstadoLabelParaClases.new(3, 5, true) # TODO: No se pone en orden correcto, chequear implementación
       unAlumno = AlumnoLabelParaClases.new("Matias","123456-7", "1234567890", unEstado)
@@ -99,17 +99,17 @@ describe Document do
     end
 
     it 'Custom funciona para clases' do
-      tag = Tag.with_everything("alumnocustomparaclases", { nombre: "Matias", legajo: "123456-7", telefono: "1234567890"}, [
-        Tag.with_everything("estadocustomparaclases", {}, [
+      tag = Tag.with_everything("alumnocustom", { nombre: "Matias", legajo: "123456-7", telefono: "1234567890"}, [
+        Tag.with_everything("estadocustom", {}, [
           Tag.with_label("regular").with_child(true),
           Tag.with_label("pendientes").with_child(2)
         ])
       ])
 
-      unEstado = EstadoCustomParaClases.new(3, 5, true)
-      unAlumno = AlumnoCustomParaClases.new("Matias","123456-7", "1234567890", unEstado)
-      puts "\n\n\n" + tag.xml + "\n\n\n"
-      puts Document.serialize(unAlumno).xml + "\n\n\n"
+      unEstado = EstadoCustom.new(3, 5, true)
+      unAlumno = AlumnoCustom.new("Matias", "123456-7", "1234567890", unEstado)
+      puts "\n\nDocument.serialize(unAlumno).xml:\n" + Document.serialize(unAlumno).xml
+      puts "\n\ntag.xml:\n" + tag.xml
       expect(Document.serialize(unAlumno).xml).to eq(tag.xml)
     end
   end

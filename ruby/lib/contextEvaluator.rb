@@ -1,5 +1,3 @@
-
-
 class ContextEvaluator
   def initialize
     @tags = []
@@ -23,40 +21,38 @@ class ContextEvaluator
     # Si tiene más de un hijo, para los primeros se ignora el retorno, pero los va guardando en la lista.
     # Solo devuelve la lista de tags cuando está completa, es decir, para el último hijo.
   end
-
-  ###########
-  # Punto 2 #
-  ###########
-  def tag_object(object) # Al principio lo había llamado solo :tag, pero entonces no tenía un buen nombre para :tag_proc (que antes era :evaluate).
-=begin
-    object = object.class.pending_annotations.reduce(object) {|object, annotation| annotation.evaluate(object)}
-
-    children_tags = tag_all(object.children)
-    tag_with_children(object.label, object.primitive_attributes_as_hash, children_tags)
-=end
-    @tags << object.class.tag_instance(object)
-  end
 end
 
 
 class Object
-  def to_tag
+  def to_tag(label = self.label)
     children_tags = tag_children
     Tag.with_everything(label, primitive_attributes_as_hash, children_tags)
   end
 
   def tag_children
-    children.map do |child|
-      # ContextEvaluator.new.tag_object(child) # TODO: fijarse cuál cumple mejor el requerimiento
-      child.primitive? ? child : ContextEvaluator.new.tag_object(child)
-    end.flatten # TODO: me hace ruido que tengamos que hacer dos veces flatten
+    non_primitive_attributes_as_hash.map do |label, child|
+      child.to_tag(label) # TODO: fijarse cuál cumple mejor el requerimiento
+      # child.primitive? ? child : ContextEvaluator.new.tag_object(child).first
+    end
   end
+  def non_primitive_attributes_as_hash # TODO: en vez de calcularlo, hacer que se vayan guardando a medida que se definen
+    atributos = Hash.new
 
-  def children
-    getters # TODO: ídem :primitive_attributes_as_hash
-      .map{ |getter| send(getter) }
-      .select{ |attr| not attr.primitive? and not attr.ignore? }
-      .flatten #[1,2,[3,4]] -> [1,2,3,4]
+    getters
+      .select { |getter| not primitive_attribute?(getter) and not send(getter).ignore? }
+      .each do |getter|
+        attr = send(getter)
+        if attr.is_a? Array
+          attr.each { |attr|
+            atributos[attr.label] = attr
+          }
+        else
+          atributos[getter] = attr
+      end
+    end
+
+    atributos
   end
 
   def getters
@@ -92,3 +88,11 @@ class Object
     atributos
   end
 end
+
+=begin
+class Class
+  def method_added(method_name)
+    0
+  end
+end
+=end

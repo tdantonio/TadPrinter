@@ -1,36 +1,35 @@
 # Defino variable global para main
 $main = self
 
-class Annotation # TODO: no me gusta que hereden solo para saber si Annotation fue heredado
-  def self.inherited(subclass)
-    $main.define_singleton_method(subclass.annotation_name) do |*args, &proc|
+module Annotation
+  def self.included(subclass)
+    $main.define_singleton_method("✨#{subclass.name}✨") do |*args, &proc|
       Annotator.add_pending_annotation(subclass.new(*args, &proc))
     end
   end
-
-  def self.annotation_name
-    "✨#{name}✨"
-  end
 end
 
-class Label < Annotation
+class Label
+  include Annotation
   def initialize(label)
     @label = label
   end
 
   def evaluate(clase)
-    label = @label # TODO: Hardcodeado nashe (no me deja ponerlo adentro del bloque)
+    label = @label
     clase.define_method(:label) { label }
   end
 end
 
-class Ignore < Annotation
+class Ignore
+  include Annotation
   def evaluate(clase)
     clase.define_method(:ignore?) { true }
   end
 end
 
-class Inline < Annotation
+class Inline
+  include Annotation
   def initialize(&proc_converter)
     @proc_converter = proc_converter
   end
@@ -40,16 +39,21 @@ class Inline < Annotation
   end
 end
 
-class Custom < Annotation
+class Custom
+  include Annotation
   def initialize(&proc_serializer)
     @proc_serializer = proc_serializer
   end
 
   def evaluate(clase)
     proc_serializer = @proc_serializer
-    clase.define_singleton_method(:tag_instance) do |instance|
-      children_tags = ContextEvaluator.new.instance_exec(instance, &proc_serializer)
-      Tag.with_everything(instance.label, {}, children_tags)
+
+    clase.define_method(:primitive_attributes_as_hash) do
+      {}
+    end
+
+    clase.define_method(:tag_children) do
+      ContextEvaluator.new.instance_exec(self, &proc_serializer)
     end
   end
 end
