@@ -1,16 +1,11 @@
-class A
-  def modify_class(clase)
-    clase.define_method(:nombre) do
-      puts "mi nombre es: #{self}"
-    end
+class Class
+  def initialize
+    puts "Inicializando"
   end
 end
 
-a = A.new
+class A
 
-class B
 end
 
-a.modify_class(B)
-
-B.new.nombre
+B = Class.new

@@ -47,27 +47,30 @@ class Object
   def non_primitive_attributes_as_hash # TODO: en vez de calcularlo, hacer que se vayan guardando a medida que se definen
     atributos = Hash.new
 
-    getters
-      .select { |getter| not primitive_attribute?(getter) and not send(getter).ignore? }
-      .each do |getter|
+    self.class.getters
+      .select { |getter, _label| not primitive_attribute?(getter) and not send(getter).ignore? } # Este es el ignore de clase
+      .each do |getter, label|
         attr = send(getter)
         if attr.is_a? Array
           attr.each { |attr|
             atributos[attr.label] = attr
           }
         else
-          atributos[getter] = attr
+          atributos[label] = attr
       end
     end
 
     atributos
   end
 
+=begin
   def getters
     instance_variables
       .map{ |atributo| atributo.to_s.delete_prefix('@') }
-      .select{ |msj| respond_to? msj }
+      .select{ |msj| respond_to? msj and send(msj) === instance_variable_get("@#{msj}") } # TODO: agregado, chequear
   end
+=end
+
 
   def primitive_attribute?(getter)
     send(getter).primitive?
@@ -78,12 +81,12 @@ class Object
     primitive_classes.any?{ |primitive_class| is_a? primitive_class }
   end
 
-  def primitive_attributes_as_hash # TODO: en vez de calcularlo, hacer que se vayan guardando a medida que se definen
+  def primitive_attributes_as_hash
     atributos = Hash.new
 
-    getters
-      .select { |getter| primitive_attribute?(getter) }
-      .each { |msj| atributos[msj] = send(msj) }
+    self.class.getters
+      .select { |getter, _label| primitive_attribute?(getter) }
+      .each { |msj, label| atributos[label] = send(msj) }
 
     atributos
   end

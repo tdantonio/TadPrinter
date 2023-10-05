@@ -11,22 +11,47 @@ class Annotator # Tiene que definirse antes de agregarle el hook inherited a Cla
     end
     @pending_annotations = []
   end
+
+  def self.has_pending_annotations?
+    not @pending_annotations.empty?
+  end
 end
 
 class Class
-  def inherited(subclass)
+  attr_reader :getters
+
+  def initialize
+    @getters = {}
+  end
+
+  def inherited(subclass)# Object recibe el mensaje :inherited cada vez que se crea una nueva clase
     Annotator.add_pending_annotations_to(subclass)
   end
 
-  def tag_instance(instance)
-    instance.to_tag
-  end
+  def method_added(method_name)# Cada clase particular recibe el mensaje :method_added cada vez que se le agrega un método
+    if Annotator.has_pending_annotations?
+      @getters ||= {} # TODO: sacar si se logra solucionar el initialize
+      @getters[method_name] = method_name
+    end
 
-  def method_added(method_name)
-    # Idea para el tema de la lista de atributos y no tener que calcularla:
-    # attribute_value = send(method_name)
-    #@attributes[method_name] = attribute_value if attribute_value.primitive?
     Annotator.add_pending_annotations_to(self, method_name)
   end
-end
 
+  alias old_attr_reader attr_reader
+  def attr_reader (*symbols)
+    old_attr_reader(*symbols)
+    @getters ||= {}
+    symbols.each do |symbol|
+      @getters[symbol] = symbol.to_s
+    end
+  end
+
+  alias old_attr_accessor attr_accessor
+  def attr_accessor (*symbols)
+    old_attr_accessor(*symbols)
+    @getters ||= {}
+    symbols.each do |symbol|
+      @getters[symbol] = symbol.to_s
+    end
+  end
+end
