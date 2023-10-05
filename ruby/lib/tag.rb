@@ -26,6 +26,7 @@ class Tag
     parameters.each do |clave, valor|
       with_attribute(clave, valor)
     end
+    # @attributes = parameters
     self
   end
 

@@ -115,25 +115,24 @@ describe Document do
   end
 
   context 'Punto 3' do
-    it 'Label funciona para clases' do
-      tag = Tag.with_everything("estudiante", { nombre: "Matias", legajo: "123456-7" }, [
-        Tag.with_everything("estado", { finales_rendidos: 3, materias_aprobadas: 5, es_regular: true }, [])])
+    it 'La annotation Label cambia la label de las clases, atributos e hijos' do
+      tag = Tag.with_everything("estudiante", { nombre: "Matias", legajo: "123456-7", celular: "1234567890" }, [
+        Tag.with_everything("situacion", { finales_rendidos: 3, materias_aprobadas: 5, es_regular: true }, [])])
 
-      unEstado = EstadoLabelParaClases.new(3, 5, true) # TODO: No se pone en orden correcto, chequear implementación
-      unAlumno = AlumnoLabelParaClases.new("Matias", "123456-7", "1234567890", unEstado)
-      expect(Document.serialize(unAlumno).xml).to eq(tag.xml)
-
-    end
-
-    it 'Ignore funciona para clases' do
-      tag = Tag.with_label("alumnoignoreparaclases").with_attribute(:legajo, "123456-7")
-
-      unEstado = EstadoIgnoreParaClases.new(3, 5, true)
-      unAlumno = AlumnoIgnoreParaClases.new("Matias", "123456-7", "1234567890", unEstado, "12345678")
+      unEstado = TestEstadoLabel.new(3, 5, true) # TODO: No se pone en orden correcto, chequear implementación
+      unAlumno = TestAlumnoLabel.new("Matias", "123456-7", "1234567890", unEstado)
       expect(Document.serialize(unAlumno).xml).to eq(tag.xml)
     end
 
-    it 'Custom funciona para clases' do
+    it 'La annotation ignore hace que se ignoren los atributos que la tienen o que sean instancias de una clase que la tiene' do
+      tag = Tag.with_label("testalumnoignore").with_attribute(:legajo, "123456-7")
+
+      unEstado = TestEstadoIgnore.new(3, 5, true)
+      unAlumno = TestAlumnoIgnore.new("Matias", "123456-7", "1234567890", unEstado, "12345678")
+      expect(Document.serialize(unAlumno).xml).to eq(tag.xml)
+    end
+
+    it 'La annotation custom cambia la forma de serializar hijos' do
       tag = Tag.with_everything("alumnocustom", { nombre: "Matias", legajo: "123456-7", telefono: "1234567890" }, [
         Tag.with_everything("estadocustom", {}, [
           Tag.with_label("regular").with_child(true),
@@ -141,14 +140,13 @@ describe Document do
         ])
       ])
 
-      unEstado = EstadoCustom.new(3, 5, true)
-      unAlumno = AlumnoCustom.new("Matias", "123456-7", "1234567890", unEstado)
-      puts "\n\nDocument.serialize(unAlumno).xml:\n" + Document.serialize(unAlumno).xml
-      puts "\n\ntag.xml:\n" + tag.xml
+      unEstado = TestEstadoCustom.new(3, 5, true)
+      unAlumno = TestAlumnoCustom.new("Matias", "123456-7", "1234567890", unEstado)
       expect(Document.serialize(unAlumno).xml).to eq(tag.xml)
     end
 
-    it 'Label funciona para getters' do
+    it 'La annotation inline serializa hijos como atributos' do
+
 
     end
   end

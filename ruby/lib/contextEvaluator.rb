@@ -44,7 +44,7 @@ class Object
     end
   end
 
-  def non_primitive_attributes_as_hash # TODO: en vez de calcularlo, hacer que se vayan guardando a medida que se definen
+  def non_primitive_attributes_as_hash
     atributos = Hash.new
 
     self.class.getters
@@ -56,21 +56,16 @@ class Object
             atributos[attr.label] = attr
           }
         else
+          if attr.class.annotations.any? { | annotation| annotation.is_a? Label }
+            label = attr.label
+          end
+
           atributos[label] = attr
       end
     end
 
     atributos
   end
-
-=begin
-  def getters
-    instance_variables
-      .map{ |atributo| atributo.to_s.delete_prefix('@') }
-      .select{ |msj| respond_to? msj and send(msj) === instance_variable_get("@#{msj}") } # TODO: agregado, chequear
-  end
-=end
-
 
   def primitive_attribute?(getter)
     send(getter).primitive?
@@ -94,12 +89,11 @@ class Object
   ###########
   # Punto 3 #
   ###########
-  #
-  def ignore?
-    false
-  end
-
   def label
     self.class.to_s.downcase
+  end
+
+  def ignore?
+    false
   end
 end

@@ -10,10 +10,12 @@ class Annotator # Tiene que definirse antes de agregarle el hook inherited a Cla
     @class_annotations << annotation
   end
 
+  # TODO: eliminar repetición de lógica
   def self.evaluate_class_annotations(clase)
     @class_annotations.each do |annotation|
       annotation.evaluate(clase, nil)
     end
+    clase.annotations = @class_annotations.clone
     @class_annotations = []
   end
 
@@ -31,15 +33,18 @@ end
 
 class Class
   attr_reader :getters
+  attr_accessor :annotations
 
   def inherited(subclass)# Object recibe el mensaje :inherited cada vez que se crea una nueva clase
     Annotator.evaluate_class_annotations(subclass)
   end
-
+  def delete_getter(key)
+    getters.delete(key)
+  end
   def method_added(method_name)# Cada clase particular recibe el mensaje :method_added cada vez que se le agrega un método
     if Annotator.has_method_annotations?
       @getters ||= {} # TODO: sacar si se logra solucionar el initialize
-      @getters[method_name] = method_name
+      @getters[method_name] = method_name.to_s
     end
 
     Annotator.evaluate_method_annotations(self, method_name)

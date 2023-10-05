@@ -56,6 +56,7 @@ class Label
     else
       clase.getters[method_name] = label
     end
+
   end
 end
 
@@ -66,7 +67,7 @@ class Ignore
     if method_name.nil?
       clase.define_method(:ignore?) { true }
     else
-      nil #TODO si los agregaramos a una lista/hash seria borrarlo de ahi y listo
+      clase.delete_getter(method_name)
     end
   end
 end
@@ -91,12 +92,12 @@ class Custom
   def evaluate(clase, _method_name)
     proc_serializer = @proc_serializer
 
-    clase.define_method(:primitive_attributes_as_hash) do
-      {}
-    end
-
     clase.define_method(:tag_children) do
       ContextEvaluator.new.instance_exec(self, &proc_serializer)
+    end
+
+    clase.define_method(:primitive_attributes_as_hash) do
+      {}
     end
   end
 end

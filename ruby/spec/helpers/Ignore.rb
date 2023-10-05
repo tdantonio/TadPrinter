@@ -1,4 +1,6 @@
-class AlumnoIgnoreParaClases
+class TestAlumnoIgnore
+  ✨Ignore✨ #TODO: no funca
+  attr_reader :nombre, :telefono
 
   attr_reader :legajo, :estado
 
@@ -9,10 +11,27 @@ class AlumnoIgnoreParaClases
     @estado = estado
     @dni = dni
   end
+
+=begin
+  ✨Ignore✨
+  def nombre
+    @nombre
+  end
+
+  ✨Ignore✨
+  def telefono
+    @telefono
+  end
+=end
+
+  ✨Ignore✨
+  def dni
+    @dni
+  end
 end
 
 ✨Ignore✨
-class EstadoIgnoreParaClases
+class TestEstadoIgnore
   attr_reader :finales_rendidos, :materias_aprobadas, :es_regular
   def initialize(finales_rendidos, materias_aprobadas, es_regular)
     @finales_rendidos = finales_rendidos

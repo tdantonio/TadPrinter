@@ -1,11 +1,16 @@
+class Alumno
+  attr_reader :estado, :estados
+
+end
+
 class Class
-  def initialize
-    puts "Inicializando"
+  attr_reader :
+  def method_added(method_name)
+    puts "method_added: #{method_name}"
   end
-end
-
-class A
 
 end
 
-B = Class.new
+class Estado
+  attr_reader :telefono, :materias_aprobadas
+end
