@@ -100,11 +100,3 @@ class Object
     self.class.to_s.downcase
   end
 end
-
-=begin
-class Class
-  def method_added(method_name)
-    0
-  end
-end
-=end
