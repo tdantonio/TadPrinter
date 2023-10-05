@@ -6,17 +6,20 @@ class ContextEvaluator
   ###########
   # Punto 1 #
   ###########
-  def tag_proc(proc) # Solo sirve de pasamano para que :root_tag pueda recibirlo como un objeto también.
-    instance_eval(&proc)
-  end
   private def method_missing(name, *args, &proc)
     attributes = args.empty? ? {} : args.first
-    children_tags = block_given? ? ContextEvaluator.new.tag_proc(proc) : []
+    children_tags = block_given? ? ContextEvaluator.new.instance_eval(&proc) : []
     tag_with_children(name, attributes, children_tags)
   end
 
   def tag_with_children(label, attributes, possible_children_tags)
-    children_tags = [possible_children_tags].flatten # [1,2,[3,4,[5]]] -> [1,2,3,4,5]
+    children_tags = possible_children_tags
+    unless possible_children_tags.is_a? Array
+      children_tags = [possible_children_tags]
+    end
+    # O sino:
+    # children_tags = [possible_children_tags].flatten # [1,2,[3,4,[5]]] -> [1,2,3,4,5]
+
     @tags << Tag.with_everything(label, attributes, children_tags)
     # Si tiene más de un hijo, para los primeros se ignora el retorno, pero los va guardando en la lista.
     # Solo devuelve la lista de tags cuando está completa, es decir, para el último hijo.
@@ -25,6 +28,10 @@ end
 
 
 class Object
+
+  ###########
+  # Punto 2 #
+  ###########
   def to_tag(label = self.label)
     children_tags = tag_children
     Tag.with_everything(label, primitive_attributes_as_hash, children_tags)
@@ -32,10 +39,11 @@ class Object
 
   def tag_children
     non_primitive_attributes_as_hash.map do |label, child|
-      child.to_tag(label) # TODO: fijarse cuál cumple mejor el requerimiento
+      child.to_tag(label) # TODO: fijarse cuál cumple mejor el requerimiento (corregir para que quede igual que lo q dijo agus en ds)
       # child.primitive? ? child : ContextEvaluator.new.tag_object(child).first
     end
   end
+
   def non_primitive_attributes_as_hash # TODO: en vez de calcularlo, hacer que se vayan guardando a medida que se definen
     atributos = Hash.new
 
@@ -70,14 +78,6 @@ class Object
     primitive_classes.any?{ |primitive_class| is_a? primitive_class }
   end
 
-  def ignore? # TODO: No me gusta para nada
-    false
-  end
-
-  def label
-    self.class.to_s.downcase
-  end
-
   def primitive_attributes_as_hash # TODO: en vez de calcularlo, hacer que se vayan guardando a medida que se definen
     atributos = Hash.new
 
@@ -86,6 +86,18 @@ class Object
       .each { |msj| atributos[msj] = send(msj) }
 
     atributos
+  end
+
+  ###########
+  # Punto 3 #
+  ###########
+  #
+  def ignore?
+    false
+  end
+
+  def label
+    self.class.to_s.downcase
   end
 end
 

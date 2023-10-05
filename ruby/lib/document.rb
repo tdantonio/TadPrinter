@@ -2,7 +2,7 @@ class Document
   attr_writer :root_tag
   def initialize(&proc)
     if block_given?
-      @root_tag = ContextEvaluator.new.tag_proc(proc).first
+      @root_tag = ContextEvaluator.new.instance_eval(&proc).first
     end
   end
 
@@ -11,7 +11,6 @@ class Document
   end
 
   def self.serialize(object)
-    Document.new.root_tag=(object.to_tag)
+    Document.new.root_tag = object.to_tag
   end
 end
-
