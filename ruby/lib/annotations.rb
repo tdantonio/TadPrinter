@@ -23,7 +23,7 @@ module ClassAnnotation
     annotation_name = "✨#{subclass.name}✨"
 
     annotation_method = proc do |*args, &proc|
-      Annotator.add_pending_annotation(subclass.new(*args, &proc))
+      Annotator.add_class_annotation(subclass.new(*args, &proc))
     end
 
     $main.define_singleton_method(annotation_name, &annotation_method)
@@ -35,7 +35,7 @@ module MethodAnnotation
   def self.included(subclass)
     annotation_name = "✨#{subclass.name}✨"
     annotation_method = proc do |*args, &proc|
-      Annotator.add_pending_annotation(subclass.new(*args, &proc))
+      Annotator.add_method_annotation(subclass.new(*args, &proc))
     end
     Class.define_method(annotation_name, &annotation_method)
   end

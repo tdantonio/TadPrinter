@@ -1,40 +1,48 @@
 class Annotator # Tiene que definirse antes de agregarle el hook inherited a Class
-  @pending_annotations = []
+  @method_annotations = []
+  @class_annotations = []
 
-  def self.add_pending_annotation(annotation)
-    @pending_annotations << annotation
+  def self.add_method_annotation(annotation)
+    @method_annotations << annotation
   end
 
-  def self.add_pending_annotations_to(clase, method_name = nil)
-    @pending_annotations.each do |annotation|
+  def self.add_class_annotation(annotation)
+    @class_annotations << annotation
+  end
+
+  def self.evaluate_class_annotations(clase)
+    @class_annotations.each do |annotation|
+      annotation.evaluate(clase, nil)
+    end
+    @class_annotations = []
+  end
+
+  def self.evaluate_method_annotations(clase, method_name)
+    @method_annotations.each do |annotation|
       annotation.evaluate(clase, method_name)
     end
-    @pending_annotations = []
+    @method_annotations = []
   end
 
-  def self.has_pending_annotations?
-    not @pending_annotations.empty?
+  def self.has_method_annotations?
+    not @method_annotations.empty?
   end
 end
 
 class Class
   attr_reader :getters
 
-  def initialize
-    @getters = {}
-  end
-
   def inherited(subclass)# Object recibe el mensaje :inherited cada vez que se crea una nueva clase
-    Annotator.add_pending_annotations_to(subclass)
+    Annotator.evaluate_class_annotations(subclass)
   end
 
   def method_added(method_name)# Cada clase particular recibe el mensaje :method_added cada vez que se le agrega un método
-    if Annotator.has_pending_annotations?
+    if Annotator.has_method_annotations?
       @getters ||= {} # TODO: sacar si se logra solucionar el initialize
       @getters[method_name] = method_name
     end
 
-    Annotator.add_pending_annotations_to(self, method_name)
+    Annotator.evaluate_method_annotations(self, method_name)
   end
 
   alias old_attr_reader attr_reader

@@ -31,11 +31,44 @@ describe Document do
                )
       expect(documento.xml).to eq(tag.xml)
     end
+
+    it 'DLS correcto 2' do
+      documento = Document.new do
+        alumno nombre: "Matias", legajo: "123456-7" do
+          telefono numero: "123456"
+          estado do
+            finales_rendidos { 3 }
+            materias_aprobadas { 5 }
+          end
+        end
+      end
+
+      tag = Tag.with_label('alumno')
+                 .with_attribute("nombre", "Matias")
+                 .with_attribute("legajo", "123456-7")
+                 .with_child(
+                   Tag.with_label("telefono")
+                      .with_attribute("numero", "123456")
+                 )
+                 .with_child(
+                   Tag.with_label("estado")
+                      .with_child(
+                        Tag.with_label("finales_rendidos")
+                           .with_child(3)
+                      )
+                      .with_child(
+                        Tag.with_label("materias_aprobadas")
+                           .with_child(5)
+                      )
+                 )
+      expect(documento.xml).to eq(tag.xml)
+    end
   end
 
   context 'Punto 2' do
     class Alumno
       attr_reader :nombre, :legajo, :estado
+
       def initialize(nombre, legajo, telefono, estado)
         @nombre = nombre
         @legajo = legajo
@@ -46,6 +79,7 @@ describe Document do
 
     class Estado
       attr_reader :finales_rendidos, :materias_aprobadas, :es_regular
+
       def initialize(finales_rendidos, materias_aprobadas, es_regular)
         @finales_rendidos = finales_rendidos
         @es_regular = es_regular
@@ -55,17 +89,17 @@ describe Document do
 
     it 'documento_manual == documento_automatico' do
       unEstado = Estado.new(3, 5, true) # TODO: No se pone en orden correcto, chequear implementación
-      unAlumno = Alumno.new("Matias","123456-8", "1234567890", unEstado)
+      unAlumno = Alumno.new("Matias", "123456-8", "1234567890", unEstado)
       documento_automatico = Document.serialize(unAlumno)
       tag = Tag.with_label('alumno')
-               .with_attribute('nombre','Matias')
+               .with_attribute('nombre', 'Matias')
                .with_attribute('legajo', '123456-8')
                .with_child(
                  Tag.with_label('estado')
                     .with_attribute('finales_rendidos', 3)
-                    .with_attribute('es_regular', true)
                     .with_attribute('materias_aprobadas', 5)
-                 )
+                    .with_attribute('es_regular', true)
+               )
 
       documento_manual = Document.new do
         alumno nombre: unAlumno.nombre, legajo: unAlumno.legajo do
@@ -82,24 +116,25 @@ describe Document do
 
   context 'Punto 3' do
     it 'Label funciona para clases' do
-      tag = Tag.with_everything("estudiante", {nombre: "Matias", legajo: "123456-7", telefono: "1234567890"}, [
-                                Tag.with_everything("estado", {finales_rendidos: 3, es_regular: true, materias_aprobadas: 5}, [])])
+      tag = Tag.with_everything("estudiante", { nombre: "Matias", legajo: "123456-7" }, [
+        Tag.with_everything("estado", { finales_rendidos: 3, materias_aprobadas: 5, es_regular: true }, [])])
 
       unEstado = EstadoLabelParaClases.new(3, 5, true) # TODO: No se pone en orden correcto, chequear implementación
-      unAlumno = AlumnoLabelParaClases.new("Matias","123456-7", "1234567890", unEstado)
+      unAlumno = AlumnoLabelParaClases.new("Matias", "123456-7", "1234567890", unEstado)
       expect(Document.serialize(unAlumno).xml).to eq(tag.xml)
+
     end
 
     it 'Ignore funciona para clases' do
       tag = Tag.with_label("alumnoignoreparaclases").with_attribute(:legajo, "123456-7")
 
       unEstado = EstadoIgnoreParaClases.new(3, 5, true)
-      unAlumno = AlumnoIgnoreParaClases.new("Matias","123456-7", "1234567890", unEstado, "12345678")
+      unAlumno = AlumnoIgnoreParaClases.new("Matias", "123456-7", "1234567890", unEstado, "12345678")
       expect(Document.serialize(unAlumno).xml).to eq(tag.xml)
     end
 
     it 'Custom funciona para clases' do
-      tag = Tag.with_everything("alumnocustom", { nombre: "Matias", legajo: "123456-7", telefono: "1234567890"}, [
+      tag = Tag.with_everything("alumnocustom", { nombre: "Matias", legajo: "123456-7", telefono: "1234567890" }, [
         Tag.with_everything("estadocustom", {}, [
           Tag.with_label("regular").with_child(true),
           Tag.with_label("pendientes").with_child(2)
@@ -111,6 +146,10 @@ describe Document do
       puts "\n\nDocument.serialize(unAlumno).xml:\n" + Document.serialize(unAlumno).xml
       puts "\n\ntag.xml:\n" + tag.xml
       expect(Document.serialize(unAlumno).xml).to eq(tag.xml)
+    end
+
+    it 'Label funciona para getters' do
+
     end
   end
 end
