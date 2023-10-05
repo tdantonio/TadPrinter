@@ -1,16 +1,15 @@
 class Alumno
-  attr_reader :estado, :estados
 
-end
 
-class Class
-  attr_reader :
-  def method_added(method_name)
-    puts "method_added: #{method_name}"
+  ✨CombinedAnnotations✨(2, [
+  ✨Label✨("celular"),
+  ✨Label✨("celular"),
+  ✨Label✨("celular")])
+  def telefono
+    2
   end
 
-end
+  def celular
 
-class Estado
-  attr_reader :telefono, :materias_aprobadas
+  end
 end
