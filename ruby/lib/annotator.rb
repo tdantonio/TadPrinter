@@ -5,9 +5,9 @@ class Annotator # Tiene que definirse antes de agregarle el hook inherited a Cla
     @pending_annotations << annotation
   end
 
-  def self.add_pending_annotations_to(clase)
+  def self.add_pending_annotations_to(clase, method_name = nil)
     @pending_annotations.each do |annotation|
-      annotation.evaluate(clase)
+      annotation.evaluate(clase, method_name)
     end
     @pending_annotations = []
   end
@@ -20,6 +20,13 @@ class Class
 
   def tag_instance(instance)
     instance.to_tag
+  end
+
+  def method_added(method_name)
+    # Idea para el tema de la lista de atributos y no tener que calcularla:
+    # attribute_value = send(method_name)
+    #@attributes[method_name] = attribute_value if attribute_value.primitive?
+    Annotator.add_pending_annotations_to(self, method_name)
   end
 end
 
