@@ -1,16 +1,14 @@
-=begin
-module Annotation
+class Annotation
   def self.annotation_name(subclass)
     "✨#{subclass.name}✨"
   end
 
-  def self.annotation_method(subclass)
+  def self.annotation_method(subclass, add_method_name)
     proc do |*args, &proc|
-      Annotator.add_pending_annotation(subclass.new(*args, &proc))
+      Annotator.send(add_method_name, subclass.new(*args, &proc))
     end
   end
 end
-=end
 
 
 # Defino variable global para main, para usarla en cualquier contexto
@@ -19,13 +17,8 @@ $main = self
 module ClassAnnotation
   # include Annotation
   def self.included(subclass)
-
-    annotation_name = "✨#{subclass.name}✨"
-
-    annotation_method = proc do |*args, &proc|
-      Annotator.add_class_annotation(subclass.new(*args, &proc))
-    end
-
+    annotation_name = Annotation.annotation_name(subclass)
+    annotation_method = Annotation.annotation_method(subclass, :add_class_annotation)
     $main.define_singleton_method(annotation_name, &annotation_method)
   end
 end
@@ -33,10 +26,8 @@ end
 module MethodAnnotation
 
   def self.included(subclass)
-    annotation_name = "✨#{subclass.name}✨"
-    annotation_method = proc do |*args, &proc|
-      Annotator.add_method_annotation(subclass.new(*args, &proc))
-    end
+    annotation_name = Annotation.annotation_name(subclass)
+    annotation_method = Annotation.annotation_method(subclass, :add_method_annotation)
     Class.define_method(annotation_name, &annotation_method)
   end
 end
@@ -68,7 +59,7 @@ class Ignore
     if method_name.nil?
       clase.define_method(:ignore?) { true }
     else
-      clase.delete_getter(method_name)
+      clase.getters[method_name].ignore = true
     end
   end
 end

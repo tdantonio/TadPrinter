@@ -13,3 +13,15 @@ class Alumno
 
   end
 end
+
+
+
+
+class Alumno
+  attr_reader :nombre
+end
+
+✨Ignore✨
+class String
+
+end

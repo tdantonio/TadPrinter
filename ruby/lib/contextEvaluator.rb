@@ -47,7 +47,7 @@ class Object
   def children_as_hash
     children = Hash.new
 
-    self.class.getters
+    getters_with_serializer
       .select { |getter, serializer| serializer.child_for?(self, getter) }
       .each do |getter, serializer|
         attr_value = send(getter)
@@ -66,31 +66,6 @@ class Object
     children
   end
 
-=begin
-  def non_primitive_attributes_as_hash
-    atributos = Hash.new
-
-    self.class.getters
-      .select { |getter, _label| not primitive_attribute?(getter) and not send(getter).ignore? } # Este es el ignore de clase
-      .each do |getter, label|
-        attr = send(getter)
-        if attr.is_a? Array
-          attr.each { |attr|
-            atributos[attr.label] = attr
-          }
-        else
-          if attr.class.annotations.any? { | annotation| annotation.is_a? Label }
-            label = attr.label
-          end
-
-          atributos[label] = attr
-      end
-    end
-
-    atributos
-  end
-=end
-
   def primitive?
     primitive_classes = [String, FalseClass, TrueClass, NilClass, Numeric]
     primitive_classes.any?{ |primitive_class| is_a? primitive_class }
@@ -99,11 +74,29 @@ class Object
   def attributes_as_hash
     atributos = Hash.new
 
-    self.class.getters
-      .select { |getter, serializer| serializer.attribute_for?(self, getter) }
+    getters_with_serializer
+      .select { |getter, serializer| serializer.attribute_for?(self, getter)}
       .each { |getter, serializer| atributos[serializer.label] = serializer.get_value_for(self, getter) }
 
     atributos
+  end
+
+  def getters_with_serializer
+    manual_getters = instance_variables
+                       .map{ |atributo| atributo.to_s.delete_prefix('@') }
+                       .select{ |getter| respond_to? getter }
+
+    manual_getters_as_hash = manual_getters.map { |getter| [getter.to_sym, Serializer.new(getter.to_s)] }.to_h
+
+    # manual_getters_as_hash.merge( self.class.getters ) # Los pone en cualquier orden, pues instance_variables los agarra en cualquier orden
+
+    manual_getters_as_hash.each do |manual_getter, serializer|
+      unless self.class.getters.has_key?(manual_getter)
+        self.class.getters[manual_getter] = serializer
+      end
+    end
+
+    self.class.getters
   end
 
   ###########

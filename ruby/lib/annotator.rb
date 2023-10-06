@@ -63,30 +63,24 @@ class Class
     Annotator.evaluate_method_annotations(self, method_name)
   end
 
-
-  # TODO: eliminar repetición de lógica
   alias old_attr_reader attr_reader
   def attr_reader (*symbols)
-    @getters ||= {}
-    symbols.each do |symbol|
-      @getters[symbol] = Serializer.new(symbol.to_s)
-    end
-
-    Annotator.pending_multiple_methods(true)
-    new_methods = old_attr_reader(*symbols)
-    Annotator.empty_method_annotations
-    new_methods
+    attr_definition(:old_attr_reader, *symbols)
   end
 
   alias old_attr_accessor attr_accessor
   def attr_accessor (*symbols)
+    attr_definition(:old_attr_accessor, *symbols)
+  end
+
+  def attr_definition(old_attr_method, *symbols)
     @getters ||= {}
     symbols.each do |symbol|
       @getters[symbol] = Serializer.new(symbol.to_s)
     end
 
     Annotator.pending_multiple_methods(true)
-    new_methods = old_attr_accessor(*symbols)
+    new_methods = send(old_attr_method, *symbols)
     Annotator.empty_method_annotations
     new_methods
   end
