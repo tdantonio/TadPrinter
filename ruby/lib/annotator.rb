@@ -3,12 +3,13 @@ class Annotator # Tiene que definirse antes de agregarle el hook inherited a Cla
   @class_annotations = []
   @pending_attr_reader = false
 
-  def self.pending_attr_reader(bool)
+  def self.pending_multiple_methods(bool)
     @pending_attr_reader = bool
   end
 
   def self.empty_method_annotations
     @method_annotations = []
+    @pending_attr_reader = false
   end
 
   def self.add_method_annotation(annotation)
@@ -47,6 +48,7 @@ class Class
   def inherited(subclass)# Object recibe el mensaje :inherited cada vez que se crea una nueva clase
     Annotator.evaluate_class_annotations(subclass)
   end
+
   def delete_getter(key)
     getters.delete(key)
   end
@@ -55,33 +57,37 @@ class Class
     # Cada clase particular recibe el mensaje :method_added cada vez que se le agrega un método
     if Annotator.has_method_annotations?
       @getters ||= {} # TODO: sacar si se logra solucionar el initialize
-      @getters[method_name] = method_name.to_s
+      @getters[method_name] = Serializer.new(method_name.to_s)
     end
 
     Annotator.evaluate_method_annotations(self, method_name)
   end
+
 
   # TODO: eliminar repetición de lógica
   alias old_attr_reader attr_reader
   def attr_reader (*symbols)
     @getters ||= {}
     symbols.each do |symbol|
-      @getters[symbol] = symbol.to_s
+      @getters[symbol] = Serializer.new(symbol.to_s)
     end
 
-    annotations = Annotator.method_annotations
-    symbols.each do |symbol|
-      Annotator.method_annotations = annotations
-      old_attr_reader(symbol)
-    end
+    Annotator.pending_multiple_methods(true)
+    new_methods = old_attr_reader(*symbols)
+    Annotator.empty_method_annotations
+    new_methods
   end
 
   alias old_attr_accessor attr_accessor
   def attr_accessor (*symbols)
     @getters ||= {}
     symbols.each do |symbol|
-      @getters[symbol] = symbol.to_s
+      @getters[symbol] = Serializer.new(symbol.to_s)
     end
-    old_attr_accessor(*symbols)
+
+    Annotator.pending_multiple_methods(true)
+    new_methods = old_attr_accessor(*symbols)
+    Annotator.empty_method_annotations
+    new_methods
   end
 end

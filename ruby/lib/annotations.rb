@@ -1,4 +1,3 @@
-
 =begin
 module Annotation
   def self.annotation_name(subclass)
@@ -39,7 +38,6 @@ module MethodAnnotation
       Annotator.add_method_annotation(subclass.new(*args, &proc))
     end
     Class.define_method(annotation_name, &annotation_method)
-
   end
 end
 
@@ -56,7 +54,7 @@ class Label
     if method_name.nil?
       clase.define_method(:label) { label }
     else
-      clase.getters[method_name] = label
+      clase.getters[method_name].label = label
     end
 
   end
@@ -65,6 +63,7 @@ end
 class Ignore
   include ClassAnnotation
   include MethodAnnotation
+
   def evaluate(clase, method_name)
     if method_name.nil?
       clase.define_method(:ignore?) { true }
@@ -76,12 +75,17 @@ end
 
 class Inline
   include MethodAnnotation
+
   def initialize(&proc_converter)
     @proc_converter = proc_converter
   end
 
-  def evaluate(campo, method_name)
-    # TODO
+  def evaluate(clase, method_name)
+    proc = @proc_converter
+    serializer = clase.getters[method_name]
+    serializer.define_singleton_method(:get_value_for) do |instance, getter|
+      instance_exec(instance.send(getter), &proc)
+    end
   end
 end
 
@@ -98,9 +102,8 @@ class Custom
       ContextEvaluator.new.instance_exec(self, &proc_serializer)
     end
 
-    clase.define_method(:primitive_attributes_as_hash) do
+    clase.define_method(:attributes_as_hash) do
       {}
     end
   end
 end
-

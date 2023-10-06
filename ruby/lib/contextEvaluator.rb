@@ -34,16 +34,39 @@ class Object
   ###########
   def to_tag(label = self.label)
     children_tags = tag_children
-    Tag.with_everything(label, primitive_attributes_as_hash, children_tags)
+    Tag.with_everything(label, attributes_as_hash, children_tags)
   end
 
   def tag_children
-    non_primitive_attributes_as_hash.map do |label, child|
+    children_as_hash.map do |label, child|
       child.to_tag(label) # TODO: fijarse cuál cumple mejor el requerimiento (corregir para que quede igual que lo q dijo agus en ds)
       # child.primitive? ? child : ContextEvaluator.new.tag_object(child).first
     end
   end
 
+  def children_as_hash
+    children = Hash.new
+
+    self.class.getters
+      .select { |getter, serializer| serializer.child_for?(self, getter) }
+      .each do |getter, serializer|
+        attr_value = send(getter)
+        if attr_value.is_a? Array
+          attr_value.each do |array_attr|
+            children[array_attr.label] = array_attr
+          end
+        else
+          if attr_value.class.annotations.any? { | annotation| annotation.is_a? Label }
+            serializer.label = attr_value.label
+          end
+          children[serializer.label] = attr_value
+        end
+      end
+
+    children
+  end
+
+=begin
   def non_primitive_attributes_as_hash
     atributos = Hash.new
 
@@ -66,22 +89,19 @@ class Object
 
     atributos
   end
-
-  def primitive_attribute?(getter)
-    send(getter).primitive?
-  end
+=end
 
   def primitive?
     primitive_classes = [String, FalseClass, TrueClass, NilClass, Numeric]
     primitive_classes.any?{ |primitive_class| is_a? primitive_class }
   end
 
-  def primitive_attributes_as_hash
+  def attributes_as_hash
     atributos = Hash.new
 
     self.class.getters
-      .select { |getter, _label| primitive_attribute?(getter) }
-      .each { |msj, label| atributos[label] = send(msj) }
+      .select { |getter, serializer| serializer.attribute_for?(self, getter) }
+      .each { |getter, serializer| atributos[serializer.label] = serializer.get_value_for(self, getter) }
 
     atributos
   end

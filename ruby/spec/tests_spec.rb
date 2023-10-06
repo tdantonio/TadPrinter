@@ -133,8 +133,8 @@ describe Document do
     end
 
     it 'La annotation custom cambia la forma de serializar hijos' do
-      tag = Tag.with_everything("alumnocustom", { nombre: "Matias", legajo: "123456-7", telefono: "1234567890" }, [
-        Tag.with_everything("estadocustom", {}, [
+      tag = Tag.with_everything("testalumnocustom", { nombre: "Matias", legajo: "123456-7", telefono: "1234567890" }, [
+        Tag.with_everything("testestadocustom", {}, [
           Tag.with_label("regular").with_child(true),
           Tag.with_label("pendientes").with_child(2)
         ])
@@ -142,12 +142,17 @@ describe Document do
 
       unEstado = TestEstadoCustom.new(3, 5, true)
       unAlumno = TestAlumnoCustom.new("Matias", "123456-7", "1234567890", unEstado)
+
       expect(Document.serialize(unAlumno).xml).to eq(tag.xml)
     end
 
     it 'La annotation inline serializa hijos como atributos' do
+      tag = Tag.with_everything("testalumnoinline", {nombre: "MATIAS", legajo: "123456-7", estado: true}, [])
 
+      unEstado = TestEstadoInline.new(5, 3, true)
+      unAlumno = TestAlumnoInline.new("matias", "123456-7", "1234567890", unEstado)
 
+      expect(Document.serialize(unAlumno).xml).to eq(tag.xml)
     end
   end
 end
