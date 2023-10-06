@@ -66,7 +66,6 @@ class Tag
       end
     end.join("\n")
   end
-
   def xml_attributes
     self.attributes.map do |name, value|
       "#{name}=#{xml_value(value, 0)}"

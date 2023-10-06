@@ -1,3 +1,4 @@
+
 =begin
 module Annotation
   def self.annotation_name(subclass)
@@ -38,6 +39,7 @@ module MethodAnnotation
       Annotator.add_method_annotation(subclass.new(*args, &proc))
     end
     Class.define_method(annotation_name, &annotation_method)
+
   end
 end
 
@@ -101,3 +103,4 @@ class Custom
     end
   end
 end
+

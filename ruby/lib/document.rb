@@ -1,3 +1,4 @@
+
 class Document
   attr_accessor :root_tag
   def initialize(&proc)
@@ -14,3 +15,4 @@ class Document
     Document.new.root_tag = object.to_tag
   end
 end
+
