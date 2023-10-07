@@ -37,5 +37,4 @@ class Serializer
   def attribute?
     get_value.primitive? and not @ignore # and not actual_value.ignore?
   end
-
 end

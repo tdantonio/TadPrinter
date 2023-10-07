@@ -42,8 +42,7 @@ class Object
     serializers
       .select { |serializer| serializer.child? }
       .map do |serializer|
-        serializer.get_value.to_tag(serializer.label) # TODO: fijarse cuál cumple mejor el requerimiento (corregir para que quede igual que lo q dijo agus en ds)
-        # child.primitive? ? child : ContextEvaluator.new.tag_object(child).first
+        serializer.get_value.to_tag(serializer.label)
     end
     # .flatten # Para cumplir lo del enunciado
   end
@@ -71,8 +70,25 @@ class Object
     serializers
       .select { |serializer| serializer.attribute? }
       .each { |serializer| attributes[serializer.label] = serializer.get_value }
-
     attributes
+  end
+
+  def getters_with_serializer
+    manual_getters = instance_variables
+                       .map{ |atributo| atributo.to_s.delete_prefix('@') }
+                       .select{ |getter| respond_to? getter }
+
+    manual_getters_as_hash = manual_getters.map { |getter| [getter.to_sym, Serializer.new(getter.to_s)] }.to_h
+
+    # manual_getters_as_hash.merge( self.class.getters ) # Los pone en cualquier orden, pues instance_variables los agarra en cualquier orden
+
+    manual_getters_as_hash.each do |manual_getter, serializer|
+      unless self.class.getters.has_key?(manual_getter)
+        self.class.getters[manual_getter] = serializer
+      end
+    end
+
+    self.class.getters
   end
 
   ###########

@@ -1,5 +1,5 @@
 class TestAlumnoIgnore
-  ✨Ignore✨ #TODO: no funca
+  ✨Ignore✨
   attr_reader :nombre, :telefono
 
   attr_reader :legajo, :estado

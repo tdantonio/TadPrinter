@@ -10,7 +10,6 @@ class TestAlumnoCustom
     @telefono = telefono
     @estado = estado
   end
-
 end
 
 ✨Custom✨ do |estado|

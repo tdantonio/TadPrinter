@@ -1,4 +1,3 @@
-
 class Document
   attr_accessor :root_tag
   def initialize(&proc)
