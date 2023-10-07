@@ -2,13 +2,13 @@ class TestAlumnoCustom
 
   attr_reader :nombre, :legajo, :telefono
 
-  attr_reader :estadocustom
+  attr_reader :estado
 
   def initialize(nombre, legajo, telefono, estado)
     @nombre = nombre
     @legajo = legajo
     @telefono = telefono
-    @estadocustom = estado
+    @estado = estado
   end
 
 end

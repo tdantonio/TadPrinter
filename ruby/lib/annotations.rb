@@ -50,27 +50,26 @@ class Label
     @label = label
   end
 
-  def evaluate(clase, method_name)
+  def evaluate_class(clase)
     label = @label
+    clase.define_method(:label) { label }
+  end
 
-    if method_name.nil?
-      clase.define_method(:label) { label }
-    else
-      clase.getters[method_name] = label
-    end
-
+  def evaluate_method(serializer)
+    label = @label
+    serializer.define_singleton_method(:label) { label }
   end
 end
 
 class Ignore
   include ClassAnnotation
   include MethodAnnotation
-  def evaluate(clase, method_name)
-    if method_name.nil?
+  def evaluate_class(clase)
       clase.define_method(:ignore?) { true }
-    else
-      clase.delete_getter(method_name)
-    end
+  end
+
+  def evaluate_method(serializer)
+    serializer.ignore = true
   end
 end
 
@@ -80,8 +79,11 @@ class Inline
     @proc_converter = proc_converter
   end
 
-  def evaluate(campo, method_name)
-    # TODO
+  def evaluate_method(serializer)
+    proc_converter = @proc_converter
+    serializer.define_singleton_method(:get_value) do
+      instance_exec(serializer.actual_value, &proc_converter)
+    end
   end
 end
 
@@ -91,14 +93,14 @@ class Custom
     @proc_serializer = proc_serializer
   end
 
-  def evaluate(clase, _method_name)
+  def evaluate_class(clase)
     proc_serializer = @proc_serializer
 
-    clase.define_method(:tag_children) do
+    clase.define_method(:tag_children) do |_serializers|
       ContextEvaluator.new.instance_exec(self, &proc_serializer)
     end
 
-    clase.define_method(:primitive_attributes_as_hash) do
+    clase.define_method(:attributes_as_hash) do |_serializers|
       {}
     end
   end

@@ -26,45 +26,34 @@ class ContextEvaluator
   end
 end
 
-
 class Object
-
   ###########
   # Punto 2 #
   ###########
   def to_tag(label = self.label)
-    children_tags = tag_children
-    Tag.with_everything(label, primitive_attributes_as_hash, children_tags)
-  end
-
-  def tag_children
-    non_primitive_attributes_as_hash.map do |label, child|
-      child.to_tag(label) # TODO: fijarse cuál cumple mejor el requerimiento (corregir para que quede igual que lo q dijo agus en ds)
-      # child.primitive? ? child : ContextEvaluator.new.tag_object(child).first
-    end
-  end
-
-  def non_primitive_attributes_as_hash
-    atributos = Hash.new
-
-    self.class.getters
-      .select { |getter, _label| not primitive_attribute?(getter) and not send(getter).ignore? } # Este es el ignore de clase
-      .each do |getter, label|
-        attr = send(getter)
-        if attr.is_a? Array
-          attr.each { |attr|
-            atributos[attr.label] = attr
-          }
-        else
-          if attr.class.annotations.any? { | annotation| annotation.is_a? Label }
-            label = attr.label
-          end
-
-          atributos[label] = attr
-      end
+    serializers = getters.map do |getter, annotations|
+      Serializer.new(self, getter).evaluate(annotations)
     end
 
-    atributos
+    Tag.with_everything(label, attributes_as_hash(serializers), tag_children(serializers))
+  end
+
+  def tag_children(serializers)
+    serializers
+      .select { |serializer| serializer.child? }
+      .map do |serializer|
+        serializer.get_value.to_tag(serializer.label) # TODO: fijarse cuál cumple mejor el requerimiento (corregir para que quede igual que lo q dijo agus en ds)
+        # child.primitive? ? child : ContextEvaluator.new.tag_object(child).first
+    end
+    # .flatten # Para cumplir lo del enunciado
+  end
+
+  def getters
+    self.class.method_annotations.select do |method, _annotations|
+      instance_variables
+        .map {|instance_variable| instance_variable.to_s.delete_prefix('@')}
+        .include?(method.to_s)
+    end
   end
 
   def primitive_attribute?(getter)
@@ -76,14 +65,14 @@ class Object
     primitive_classes.any?{ |primitive_class| is_a? primitive_class }
   end
 
-  def primitive_attributes_as_hash
-    atributos = Hash.new
+  def attributes_as_hash(serializers)
+    attributes = Hash.new
 
-    self.class.getters
-      .select { |getter, _label| primitive_attribute?(getter) }
-      .each { |msj, label| atributos[label] = send(msj) }
+    serializers
+      .select { |serializer| serializer.attribute? }
+      .each { |serializer| attributes[serializer.label] = serializer.get_value }
 
-    atributos
+    attributes
   end
 
   ###########
@@ -96,4 +85,32 @@ class Object
   def ignore?
     false
   end
+end
+
+class Array
+  def to_tag(label)
+    Tag.with_everything(label, {} , tag_children)
+  end
+
+  def tag_children
+    map do |child|
+      if child.primitive?
+        Tag.with_everything(child.label, {}, [child])
+      else
+        child.to_tag
+      end
+    end
+  end
+
+  # Para cumplir lo del enunciado
+=begin
+  def to_tag
+    map do |child|
+      if child.primitive?
+        Tag.with_everything(child.label, {}, [child])
+      else
+        child.to_tag
+      end
+    end
+=end
 end
