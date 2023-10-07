@@ -150,8 +150,12 @@ describe Document do
     end
 
     it 'La annotation inline serializa hijos como atributos' do
+      tag = Tag.with_everything("testalumnoinline", {nombre: "MATIAS", legajo: "123456-7", estado: true}, [])
 
+      unEstado = TestEstadoInline.new(5, 3, true)
+      unAlumno = TestAlumnoInline.new("matias", "123456-7", "1234567890", unEstado)
 
+      expect(Document.serialize(unAlumno).xml).to eq(tag.xml)
     end
   end
 end
