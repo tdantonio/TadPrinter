@@ -1,35 +1,40 @@
 class Serializer
-  attr_accessor :label, :ignore
-  def initialize(label)
-    @label = label
+  attr_accessor :ignore
+
+  def initialize(object, getter)
+    @object = object
+    @getter = getter
     @ignore = false
   end
 
-  def get_value_for(instance, getter)
-    instance.send(getter)
+  def label
+    if not attribute? and actual_value.class.class_annotations.any? { |annotation| annotation.is_a? Label }
+      actual_value.label
+    else
+      @getter.to_s
+    end
   end
 
-  # TODO: eliminar repetición de lógica
-  def attribute_for?(instance, getter)
-    get_value_for(instance, getter).primitive? and not @ignore
+  def actual_value
+    @object.send(@getter)
   end
 
-  def child_for?(instance, getter)
-    not get_value_for(instance, getter).primitive? and not @ignore and not get_value_for(instance, getter).ignore?
+  def get_value
+    actual_value
   end
 
-  # Idea para eliminarla
-=begin
-  def attribute_for?(instance, getter)
-    x(instance, getter, true)
+  def evaluate(annotations)
+    annotations.each do |annotation|
+      annotation.evaluate_method(self)
+    end
+    self
   end
 
-  def child_for?(instance, getter)
-    x(instance, getter, false)
+  def child?
+    not get_value.primitive? and not @ignore and not actual_value.ignore?
   end
 
-  def x(instance, getter, negar)
-    negar == get_value_for(instance, getter).primitive? and not @ignore and not get_value_for(instance, getter).ignore?
+  def attribute?
+    get_value.primitive? and not @ignore # and not actual_value.ignore?
   end
-=end
 end

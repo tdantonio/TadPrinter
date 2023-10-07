@@ -26,44 +26,37 @@ class ContextEvaluator
   end
 end
 
-
 class Object
-
   ###########
   # Punto 2 #
   ###########
   def to_tag(label = self.label)
-    children_tags = tag_children
-    Tag.with_everything(label, attributes_as_hash, children_tags)
+    serializers = getters.map do |getter, annotations|
+      Serializer.new(self, getter).evaluate(annotations)
+    end
+
+    Tag.with_everything(label, attributes_as_hash(serializers), tag_children(serializers))
   end
 
-  def tag_children
-    children_as_hash.map do |label, child|
-      child.to_tag(label) # TODO: fijarse cuál cumple mejor el requerimiento (corregir para que quede igual que lo q dijo agus en ds)
-      # child.primitive? ? child : ContextEvaluator.new.tag_object(child).first
+  def tag_children(serializers)
+    serializers
+      .select { |serializer| serializer.child? }
+      .map do |serializer|
+        serializer.get_value.to_tag(serializer.label)
+    end
+    # .flatten # Para cumplir lo del enunciado
+  end
+
+  def getters
+    self.class.method_annotations.select do |method, _annotations|
+      instance_variables
+        .map {|instance_variable| instance_variable.to_s.delete_prefix('@')}
+        .include?(method.to_s)
     end
   end
 
-  def children_as_hash
-    children = Hash.new
-
-    getters_with_serializer
-      .select { |getter, serializer| serializer.child_for?(self, getter) }
-      .each do |getter, serializer|
-        attr_value = send(getter)
-        if attr_value.is_a? Array
-          attr_value.each do |array_attr|
-            children[array_attr.label] = array_attr
-          end
-        else
-          if attr_value.class.annotations.any? { | annotation| annotation.is_a? Label }
-            serializer.label = attr_value.label
-          end
-          children[serializer.label] = attr_value
-        end
-      end
-
-    children
+  def primitive_attribute?(getter)
+    send(getter).primitive?
   end
 
   def primitive?
@@ -71,14 +64,13 @@ class Object
     primitive_classes.any?{ |primitive_class| is_a? primitive_class }
   end
 
-  def attributes_as_hash
-    atributos = Hash.new
+  def attributes_as_hash(serializers)
+    attributes = Hash.new
 
-    getters_with_serializer
-      .select { |getter, serializer| serializer.attribute_for?(self, getter)}
-      .each { |getter, serializer| atributos[serializer.label] = serializer.get_value_for(self, getter) }
-
-    atributos
+    serializers
+      .select { |serializer| serializer.attribute? }
+      .each { |serializer| attributes[serializer.label] = serializer.get_value }
+    attributes
   end
 
   def getters_with_serializer
@@ -109,4 +101,32 @@ class Object
   def ignore?
     false
   end
+end
+
+class Array
+  def to_tag(label)
+    Tag.with_everything(label, {} , tag_children)
+  end
+
+  def tag_children
+    map do |child|
+      if child.primitive?
+        Tag.with_everything(child.label, {}, [child])
+      else
+        child.to_tag
+      end
+    end
+  end
+
+  # Para cumplir lo del enunciado
+=begin
+  def to_tag
+    map do |child|
+      if child.primitive?
+        Tag.with_everything(child.label, {}, [child])
+      else
+        child.to_tag
+      end
+    end
+=end
 end
