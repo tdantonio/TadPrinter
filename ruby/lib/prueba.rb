@@ -1,37 +1,41 @@
-class Alumno
-
-
-  ✨CombinedAnnotations✨(2, [
-  ✨Label✨("celular"),
-  ✨Label✨("celular"),
-  ✨Label✨("celular")])
-  def telefono
-    2
-  end
-
-  def celular
-
+module ComportamientoComun
+  def mensaje_comun
+    puts "Este es un mensaje común desde ComportamientoComun"
   end
 end
 
+module Modulo1
+  class << self
+    include ComportamientoComun
+  end
 
-
-class A
-
-  attr_reader :falopa
-
-  @cosas = [1, 2, estado]
+  # Otros métodos específicos de Modulo1
 end
 
-Label(asd)
-class Estado
+module Modulo2
+  class << self
+    include ComportamientoComun
+  end
 
+  # Otros métodos específicos de Modulo2
 end
 
 =begin
-<cosas>
-  <integer>1</integer>
-  <integer>2</integer>
-  <estado es_regular=true finales_rendidos=3 materias_aprobadas=5/>
-</cosas>
+Modulo1.mensaje_comun
+Modulo2.mensaje_comun
 =end
+
+
+module A
+  def m
+    puts "HOLA"
+  end
+end
+
+module B
+  class << self
+    include A
+  end
+end
+
+B.m

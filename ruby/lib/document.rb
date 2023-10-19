@@ -1,9 +1,7 @@
 class Document
   attr_accessor :root_tag
   def initialize(&proc)
-    if block_given?
-      @root_tag = ContextEvaluator.new.instance_eval(&proc).first
-    end
+    @root_tag = ContextEvaluator.new.instance_eval(&proc).first
   end
 
   def xml
@@ -11,7 +9,7 @@ class Document
   end
 
   def self.serialize(object)
-    Document.new.root_tag = object.to_tag
+    object.to_tag
   end
 end
 

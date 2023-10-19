@@ -26,18 +26,11 @@ class ContextEvaluator
 end
 
 class Object
-  ###########
-  # Punto 2 #
-  ###########
   def to_tag(label = self.label)
-    serializers = getters.map do |getter, annotations|
-      Serializer.new(self, getter).evaluate(annotations)
-    end
-
-    Tag.with_everything(label, attributes_as_hash(serializers), tag_children(serializers))
+    Tag.with_everything(label, attributes_as_hash, tag_children)
   end
 
-  def tag_children(serializers)
+  private def tag_children
     serializers
       .select { |serializer| serializer.child? }
       .map do |serializer|
@@ -45,7 +38,13 @@ class Object
     end
   end
 
-  def getters
+  private def serializers
+    getters.map do |getter, annotations|
+      Serializer.new(self, getter).evaluate(annotations)
+    end
+  end
+
+  private def getters
     self.class.method_annotations.select do |method, _annotations|
       instance_variables
         .map {|instance_variable| instance_variable.to_s.delete_prefix('@')}
@@ -53,15 +52,11 @@ class Object
     end
   end
 
-  def primitive_attribute?(getter)
-    send(getter).primitive?
-  end
-
   def primitive?
     is_a? Primitive
   end
 
-  def attributes_as_hash(serializers)
+  private def attributes_as_hash
     attributes = Hash.new
 
     serializers
@@ -70,12 +65,13 @@ class Object
     attributes
   end
 
+=begin
   def getters_with_serializer
     manual_getters = instance_variables
                        .map{ |atributo| atributo.to_s.delete_prefix('@') }
                        .select{ |getter| respond_to? getter }
 
-    manual_getters_as_hash = manual_getters.map { |getter| [getter.to_sym, Serializer.new(getter.to_s)] }.to_h
+    manual_getters_as_hash = manual_getters.map { |getter| [getter.to_sym, Serializer.new(self, getter.to_s)] }.to_h
 
     # manual_getters_as_hash.merge( self.class.getters ) # Los pone en cualquier orden, pues instance_variables los agarra en cualquier orden
 
@@ -87,10 +83,8 @@ class Object
 
     self.class.getters
   end
+=end
 
-  ###########
-  # Punto 3 #
-  ###########
   def label
     self.class.to_s.downcase
   end

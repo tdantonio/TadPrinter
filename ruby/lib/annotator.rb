@@ -26,15 +26,18 @@ class Annotator # Tiene que definirse antes de agregarle el hook inherited a Cla
 end
 
 class Class
-  attr_accessor :class_annotations, :method_annotations
+  attr_accessor :class_annotations
 
   def inherited(subclass)# Object recibe el mensaje :inherited cada vez que se crea una nueva clase
     Annotator.evaluate_class_annotations(subclass)
   end
 
   def add_method_annotations(method_name, annotations) # Solo sirve para poder usar @method_annotations sin cambiar de contexto dentro del bloque
-    @method_annotations ||= {} # NO FUNCIONA EL INITIALIZE AAAAAAAAAAAAAAAA (para Class)
-    @method_annotations[method_name] = annotations
+    method_annotations[method_name] = annotations
+  end
+
+  def method_annotations
+    @method_annotations ||= {}
   end
 
   def method_added(method_name)
