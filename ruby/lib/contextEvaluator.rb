@@ -6,8 +6,7 @@ class ContextEvaluator
   ###########
   # Punto 1 #
   ###########
-  private def method_missing(name, *args, &proc)
-    attributes = args.empty? ? {} : args.first
+  private def method_missing(name, **attributes, &proc)
     children_tags = block_given? ? ContextEvaluator.new.instance_eval(&proc) : []
     tag_with_children(name, attributes, children_tags)
   end
@@ -44,7 +43,6 @@ class Object
       .map do |serializer|
         serializer.get_value.to_tag(serializer.label)
     end
-    # .flatten # Para cumplir lo del enunciado
   end
 
   def getters
@@ -60,8 +58,7 @@ class Object
   end
 
   def primitive?
-    primitive_classes = [String, FalseClass, TrueClass, NilClass, Numeric]
-    primitive_classes.any?{ |primitive_class| is_a? primitive_class }
+    is_a? Primitive
   end
 
   def attributes_as_hash(serializers)
@@ -103,6 +100,18 @@ class Object
   end
 end
 
+
+=begin
+✨Custom✨ do |array|
+  array.map do |child|
+    if child.primitive?
+      Tag.with_everything(child.label, {}, [child])
+    else
+      child.to_tag
+    end
+  end
+end
+=end
 class Array
   def to_tag(label)
     Tag.with_everything(label, {} , tag_children)
@@ -111,22 +120,19 @@ class Array
   def tag_children
     map do |child|
       if child.primitive?
-        Tag.with_everything(child.label, {}, [child])
+        Tag.with_label(child.label).with_child(child)
       else
         child.to_tag
       end
     end
   end
-
-  # Para cumplir lo del enunciado
-=begin
-  def to_tag
-    map do |child|
-      if child.primitive?
-        Tag.with_everything(child.label, {}, [child])
-      else
-        child.to_tag
-      end
-    end
-=end
 end
+
+module Primitive
+end
+
+String.include Primitive
+TrueClass.include Primitive
+FalseClass.include Primitive
+Numeric.include Primitive
+NilClass.include Primitive

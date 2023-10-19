@@ -1,10 +1,8 @@
 class Serializer
-  attr_accessor :ignore
 
   def initialize(object, getter)
     @object = object
     @getter = getter
-    @ignore = false
   end
 
   def label
@@ -13,6 +11,10 @@ class Serializer
     else
       @getter.to_s
     end
+  end
+
+  def ignore
+    false
   end
 
   def actual_value
@@ -31,10 +33,10 @@ class Serializer
   end
 
   def child?
-    not get_value.primitive? and not @ignore and not actual_value.ignore?
+    ! get_value.primitive? && ! ignore && ! actual_value.ignore?
   end
 
   def attribute?
-    get_value.primitive? and not @ignore # and not actual_value.ignore?
+    get_value.primitive? && ! ignore # TODO: and not actual_value.ignore?
   end
 end

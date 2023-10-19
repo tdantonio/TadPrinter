@@ -59,7 +59,7 @@ class Ignore
   end
 
   def evaluate_method(serializer)
-    serializer.ignore = true
+    serializer.define_singleton_method(:ignore) { true }
   end
 end
 
