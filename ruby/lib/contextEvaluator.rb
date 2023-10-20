@@ -69,25 +69,6 @@ class Object
     attributes
   end
 
-  # TODO: esto es por si se quiere contemplar todos los métodos
-  def getters_with_serializer
-    manual_getters = instance_variables
-                       .map{ |atributo| atributo.to_s.delete_prefix('@') }
-                       .select{ |getter| respond_to? getter }
-
-    manual_getters_as_hash = manual_getters.map { |getter| [getter.to_sym, Serializer.new(self, getter.to_s)] }.to_h
-
-    # manual_getters_as_hash.merge( self.class.getters ) # Los pone en cualquier orden, pues instance_variables los agarra en cualquier orden
-
-    manual_getters_as_hash.each do |manual_getter, serializer|
-      unless self.class.getters.has_key?(manual_getter)
-        self.class.getters[manual_getter] = serializer
-      end
-    end
-
-    self.class.getters
-  end
-
   def label
     self.class.to_s.downcase
   end
