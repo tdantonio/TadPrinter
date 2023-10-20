@@ -47,6 +47,8 @@ class Object
   private def getters # TODO: el nombre no está tan bueno
     self.class.method_annotations.select do |method, annotations|
       getter?(method) || ! annotations.empty?
+      # Esto último es para contemplar los métodos que no sean getters, pero que tengan annotations,
+      # por si lo requerimos para el TP individual.
     end
   end
 

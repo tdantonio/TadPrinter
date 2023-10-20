@@ -179,13 +179,12 @@ describe Document do
 
   context 'Errores' do
     it 'Inline falla para clases' do
-=begin
-      begin
-      rescue NoMethodError => e
-      end
-      expect {e.cause}.to raise_error(NoMethodError)
-=end
       # TODO: falla porque rompe antes de entrar al test. Rompe directamente en el require_relative
+    end
+
+    it 'Inline devuelve un child' do
+      unAlumno = TestAlumnoInlineError.new
+      expect {Document.serialize(unAlumno).xml}.to raise_error(AnnotationError)
     end
   end
 end

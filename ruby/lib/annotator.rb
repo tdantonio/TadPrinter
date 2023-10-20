@@ -65,6 +65,8 @@ class Class
 end
 
 
+# Esto se usa como reemplazo del :inherited en Class, ya que es más simple y además nos permite agregar
+# annotations a clases que ya estaban definidas, como, por ejemplo, hicimos con Custom en Array.
 class_trace = TracePoint.new(:class) do |tp|
   # TODO: extender nuestra solución a Module en vez de a Class
   if tp.self.is_a? Class # Si no se pregunta esto, también aplica para modules
@@ -74,8 +76,25 @@ end
 class_trace.enable
 
 
+=begin
+Esto es para que, si se hace una clase vacía (sin métodos) o se extiende una clase ya existente,
+al usar annotations de métodos (por más que no se defina ninguno), estas no perduren para la próxima
+clase a definir. Por ejemplo:
+
+class A
+  ✨ignore✨
+end
+
+class B
+  def energia
+    100
+  end
+end
+
+Es un caso muy sutil e improbable, pero bueno, no molesta mucho contemplarlo.
+=end
 class_empty_trace = TracePoint.new(:end) do |tp|
-  Annotator.empty_method_annotations()
+  Annotator.empty_method_annotations
 end
 class_empty_trace.enable
 
