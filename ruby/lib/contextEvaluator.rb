@@ -66,6 +66,7 @@ class Object
   end
 
 =begin
+  # TODO: esto es por si se quiere contemplar todos los métodos
   def getters_with_serializer
     manual_getters = instance_variables
                        .map{ |atributo| atributo.to_s.delete_prefix('@') }
@@ -98,7 +99,7 @@ end
 ✨Custom✨ do |array|
   array.map do |child|
     if child.primitive?
-      Tag.with_everything(child.label, {}, [child])
+      Tag.with_label(child.label).with_child(child)
     else
       child.to_tag
     end

@@ -23,6 +23,10 @@ class Annotator # Tiene que definirse antes de agregarle el hook inherited a Cla
     @method_annotations = []
     method_annotations
   end
+
+  def self.empty_method_annotations
+    @method_annotations = []
+  end
 end
 
 class Class
@@ -61,10 +65,17 @@ class Class
 end
 
 
-classTrace = TracePoint.new(:class) do |tp|
+class_trace = TracePoint.new(:class) do |tp|
   # TODO: extender nuestra solución a Module en vez de a Class
   if tp.self.is_a? Class # Si no se pregunta esto, también aplica para modules
     Annotator.evaluate_class_annotations(tp.self)
   end
 end
-classTrace.enable
+class_trace.enable
+
+
+class_empty_trace = TracePoint.new(:end) do |tp|
+  Annotator.empty_method_annotations()
+end
+class_empty_trace.enable
+

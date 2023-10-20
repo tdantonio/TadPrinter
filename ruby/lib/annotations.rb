@@ -75,6 +75,9 @@ class Inline
 
   def evaluate_method(serializer)
     proc_converter = @proc_converter
+
+    serializer.validate_attribute_return(proc_converter)
+
     serializer.define_singleton_method(:get_value) do
       instance_exec(serializer.actual_value, &proc_converter)
     end

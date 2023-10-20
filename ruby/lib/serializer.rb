@@ -39,4 +39,10 @@ class Serializer
   def attribute?
     get_value.primitive? && ! ignore # TODO: and not actual_value.ignore?
   end
+
+  def validate_attribute_return(proc_converter)
+    unless instance_exec(actual_value, &proc_converter).primitive?
+      raise ArgumentError, "Inline modification can not be representable as an attribute"
+    end
+  end
 end
