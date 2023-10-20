@@ -1,3 +1,8 @@
+trace = TracePoint.new(:line) { |tp|
+  p tp.lineno
+}
+trace.enable
+
 trace = TracePoint.new(:class) do |tp|
   p [tp.lineno, tp.event, tp.self]
 end

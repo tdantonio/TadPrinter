@@ -113,7 +113,7 @@ describe Document do
       # puts "\n\n" + documento_manual.xml + "\n\n"
 
       expect(documento_automatico.xml).to eq(documento_manual.xml)
-      #expect(documento_manual.xml).to eq(tag.xml)
+      expect(documento_manual.xml).to eq(tag.xml)
     end
   end
 
@@ -159,6 +159,33 @@ describe Document do
       unAlumno = TestAlumnoInline.new("matias", "123456-7", "1234567890", unEstado)
 
       expect(Document.serialize(unAlumno).xml).to eq(tag.xml)
+    end
+  end
+
+  context 'Arrays' do
+    it 'Un array se serializa correctamente' do
+      tag = Tag.with_label("alumno")
+               .with_child(Tag.with_label("notas").with_children([
+                                                                   Tag.with_label("integer").with_child(1),
+                                                                   Tag.with_label("integer").with_child(2),
+                                                                   Tag.with_label("integer").with_child(3),
+                                                                 ]))
+
+      unAlumno = TestAlumnoConArray.new([1,2,3])
+
+      expect(Document.serialize(unAlumno).xml).to eq(tag.xml)
+    end
+  end
+
+  context 'Errores' do
+    it 'Inline falla para clases' do
+=begin
+      begin
+      rescue NoMethodError => e
+      end
+      expect {e.cause}.to raise_error(NoMethodError)
+=end
+      # TODO: falla porque rompe antes de entrar al test. Rompe directamente en el require_relative
     end
   end
 end

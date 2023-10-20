@@ -44,12 +44,16 @@ class Object
     end
   end
 
-  private def getters
-    self.class.method_annotations.select do |method, _annotations|
-      instance_variables
-        .map {|instance_variable| instance_variable.to_s.delete_prefix('@')}
-        .include?(method.to_s)
+  private def getters # TODO: el nombre no está tan bueno
+    self.class.method_annotations.select do |method, annotations|
+      getter?(method) || ! annotations.empty?
     end
+  end
+
+  def getter?(method)
+    instance_variables
+      .map {|instance_variable| instance_variable.to_s.delete_prefix('@')}
+      .include?(method.to_s)
   end
 
   def primitive?
@@ -65,7 +69,6 @@ class Object
     attributes
   end
 
-=begin
   # TODO: esto es por si se quiere contemplar todos los métodos
   def getters_with_serializer
     manual_getters = instance_variables
@@ -84,7 +87,6 @@ class Object
 
     self.class.getters
   end
-=end
 
   def label
     self.class.to_s.downcase
