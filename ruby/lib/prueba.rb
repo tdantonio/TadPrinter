@@ -1,41 +1,22 @@
-module ComportamientoComun
-  def mensaje_comun
-    puts "Este es un mensaje común desde ComportamientoComun"
-  end
+trace = TracePoint.new(:class) do |tp|
+  p [tp.lineno, tp.event, tp.self]
+end
+#=> #<TracePoint:disabled>
+
+trace.enable
+#=> false
+
+class PRUEBA
+
 end
 
-module Modulo1
-  class << self
-    include ComportamientoComun
-  end
+module ModuloFalopa
 
-  # Otros métodos específicos de Modulo1
+end
+class PRUEBA
+
 end
 
-module Modulo2
-  class << self
-    include ComportamientoComun
-  end
+class String
 
-  # Otros métodos específicos de Modulo2
 end
-
-=begin
-Modulo1.mensaje_comun
-Modulo2.mensaje_comun
-=end
-
-
-module A
-  def m
-    puts "HOLA"
-  end
-end
-
-module B
-  class << self
-    include A
-  end
-end
-
-B.m

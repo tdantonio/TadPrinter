@@ -95,7 +95,6 @@ class Object
 end
 
 
-=begin
 ✨Custom✨ do |array|
   array.map do |child|
     if child.primitive?
@@ -105,28 +104,10 @@ end
     end
   end
 end
-=end
 class Array
-  def to_tag(label)
-    Tag.with_everything(label, {} , tag_children)
-  end
-
-  def tag_children
-    map do |child|
-      if child.primitive?
-        Tag.with_label(child.label).with_child(child)
-      else
-        child.to_tag
-      end
-    end
-  end
 end
 
 module Primitive
 end
 
-String.include Primitive
-TrueClass.include Primitive
-FalseClass.include Primitive
-Numeric.include Primitive
-NilClass.include Primitive
+[String, TrueClass, FalseClass, Numeric, NilClass].each{|primitiveClass| primitiveClass.include Primitive}

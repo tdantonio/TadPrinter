@@ -28,10 +28,6 @@ end
 class Class
   attr_accessor :class_annotations
 
-  def inherited(subclass)# Object recibe el mensaje :inherited cada vez que se crea una nueva clase
-    Annotator.evaluate_class_annotations(subclass)
-  end
-
   def add_method_annotations(method_name, annotations) # Solo sirve para poder usar @method_annotations sin cambiar de contexto dentro del bloque
     method_annotations[method_name] = annotations
   end
@@ -63,3 +59,12 @@ class Class
     attr_redefinition(:old_attr_accessor, *symbols)
   end
 end
+
+
+classTrace = TracePoint.new(:class) do |tp|
+  # TODO: extender nuestra solución a Module en vez de a Class
+  if tp.self.is_a? Class # Si no se pregunta esto, también aplica para modules
+    Annotator.evaluate_class_annotations(tp.self)
+  end
+end
+classTrace.enable
