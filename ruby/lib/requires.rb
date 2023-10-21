@@ -42,3 +42,5 @@ end
 
 puts Document.serialize(A.new("Matías")).xml
 =end
+
+puts ContextEvaluator.respond_to_missing?

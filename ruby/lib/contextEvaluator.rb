@@ -11,6 +11,10 @@ class ContextEvaluator
     tag_with_children(name, attributes, children_tags)
   end
 
+  private def respond_to_missing?
+    true
+  end
+
   def tag_with_children(label, attributes, possible_children_tags)
     children_tags = possible_children_tags
     unless possible_children_tags.is_a? Array
