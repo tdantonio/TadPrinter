@@ -6,7 +6,7 @@ class Serializer
   end
 
   def label
-    if not attribute? and actual_value.class.class_annotations.any? { |annotation| annotation.is_a? Label }
+    if actual_value.class.class_annotations.any? { |annotation| annotation.is_a? Label }
       actual_value.label
     else
       @getter.to_s
@@ -37,7 +37,7 @@ class Serializer
   end
 
   def attribute?
-    get_value.primitive? && ! ignore # TODO: and not actual_value.ignore?
+    get_value.primitive? && ! ignore && ! actual_value.ignore?
   end
 
   # Esto es para no permitir que se defina un Inline que convierta al retorno de método en un child.
@@ -50,3 +50,4 @@ end
 
 class AnnotationError < ArgumentError
 end
+

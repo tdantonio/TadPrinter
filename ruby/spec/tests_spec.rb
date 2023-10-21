@@ -179,7 +179,7 @@ describe Document do
 
   context 'Errores' do
     it 'Inline falla para clases' do
-      # TODO: falla porque rompe antes de entrar al test. Rompe directamente en el require_relative
+      expect { $main.✨Inline✨ {|object| 2} }.to raise_error(NoMethodError)
     end
 
     it 'Inline devuelve un child' do

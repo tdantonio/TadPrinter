@@ -1,11 +1,3 @@
-=begin
-✨Inline✨ {|object| 2}
-class TestInlineError
-
-end
-=end
-
-
 class TestAlumnoInlineError
   ✨Inline✨ {|_object| EstadoTestInlineError.new("Dormido")}
   def estado
@@ -18,3 +10,4 @@ class EstadoTestInlineError
     @nombre = nombre
   end
 end
+

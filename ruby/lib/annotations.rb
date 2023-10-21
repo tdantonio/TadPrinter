@@ -86,8 +86,11 @@ end
 
 class Custom
   include ClassAnnotation
+  # include MethodAnnotation # Leer comentario del final
+
   def initialize(&proc_serializer)
     @proc_serializer = proc_serializer
+
   end
 
   def evaluate_class(clase)
@@ -101,4 +104,22 @@ class Custom
       {}
     end
   end
+
+  # Esto es por si quisiéramos contemplar custom para métodos
+=begin
+  NO DARLE BOLA A T0D0 ESTE COMENTARIO
+  no funciona, estábamos pelotudeando a ver si podíamos implementarlo pero nos agarró paja
+
+  TODO: no funciona porque no hay que sobreescribir :get_value, pues Custom debería modificar los hijos.
+=end
+
+=begin
+  def evaluate_method(serializer)
+    proc_serializer = @proc_serializer
+
+    serializer.define_singleton_method(:get_value) do
+      ContextEvaluator.new.instance_exec(serializer.actual_value, &proc_serializer)
+    end
+  end
+=end
 end

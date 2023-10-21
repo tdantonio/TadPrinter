@@ -30,10 +30,14 @@ class Annotator # Tiene que definirse antes de agregarle el hook inherited a Cla
 end
 
 class Class
-  attr_accessor :class_annotations
+  attr_writer :class_annotations
 
   def add_method_annotations(method_name, annotations) # Solo sirve para poder usar @method_annotations sin cambiar de contexto dentro del bloque
     method_annotations[method_name] = annotations
+  end
+
+  def class_annotations
+    @class_annotations ||= {}
   end
 
   def method_annotations
@@ -45,7 +49,7 @@ class Class
     # Guarda todos los métodos, inclusive los que no tienen annotations (con [])
   end
 
-  def attr_redefinition(old_method_symbol, *new_methods)
+  private def attr_redefinition(old_method_symbol, *new_methods)
     pending = Annotator.pop_method_annotations
     send(old_method_symbol, *new_methods)
     new_methods.each do |method|
