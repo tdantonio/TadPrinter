@@ -1,5 +1,4 @@
-# frozen_string_literal: true
+source 'https://rubygems.org'
 
-source "https://rubygems.org"
-
-# gem "rails"
+gem 'rspec'
+gem 'rubocop', group: 'development', require: false
